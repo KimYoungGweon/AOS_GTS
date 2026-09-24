@@ -1,0 +1,333 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="stylesheet" href="_ds/industry-2161c2d8-76ef-40bb-8456-498e59407883/styles.css">
+<script src="_ds/industry-2161c2d8-76ef-40bb-8456-498e59407883/_ds_bundle.js"></script>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Barlow:wght@400;500;600&family=Barlow+Condensed:wght@500;600;700&display=swap">
+<script src="./doc-page.js"></script>
+<style>
+doc-page:not(:defined){visibility:hidden}
+.table td,.table th{font-size:11.5px;padding:4px 7px}
+.table th{white-space:nowrap}
+code{font-family:ui-monospace,Menlo,monospace;font-size:11.5px;background:var(--color-neutral-200);padding:1px 4px}
+pre{font-family:ui-monospace,Menlo,monospace;font-size:11px;line-height:1.5;background:var(--color-neutral-100);border:1px solid var(--color-divider);padding:10px 12px;overflow-x:auto;break-inside:avoid}
+a{color:var(--color-accent-700)}a:hover{color:var(--color-accent-900)}
+</style>
+</helmet>
+
+<doc-page margin="0.6in">
+
+<div style="display:flex;justify-content:space-between;align-items:baseline;border-bottom:2px solid var(--color-text);padding-bottom:8px;margin-bottom:18px">
+<span style="font:600 11px/1 var(--font-heading);letter-spacing:.16em;text-transform:uppercase;color:var(--color-accent-700)">GTS Console · Firmware UI Spec</span>
+<span style="font-size:11px;color:var(--color-neutral-600)">Rev 0.1 · 2026-09-20</span>
+</div>
+
+<h1 style="font:600 34px/1.05 var(--font-heading);margin:0 0 6px">GTS Console LCD 화면 사양서</h1>
+<p style="font-size:14px;line-height:1.6;color:var(--color-neutral-700);margin:0 0 20px">4.3″ 800 × 480 LCD · ESP32-P4 (JC4880P443C) · LVGL 구현용. 좌표와 크기는 승인된 목업 <code>GTS Console LCD.dc.html</code>에서 실측한 값이며, 단위는 px(=LCD 픽셀), 원점은 각 화면의 좌상단 (0, 0)입니다.</p>
+
+<h2 style="font:600 20px/1.15 var(--font-heading);margin:22px 0 8px">1. 하드웨어 · 화면 규격</h2>
+<table class="table" style="width:100%">
+<thead><tr><th style="text-align:left">항목</th><th style="text-align:left">값</th><th style="text-align:left">비고</th></tr></thead>
+<tbody>
+<tr><td>Panel</td><td>4.3″ TFT, 800 × 480 (H mode)</td><td>JC4880P443C EVM Kit</td></tr>
+<tr><td>유효 표시면</td><td>93.6 × 56.2 mm</td><td>대각 109.2 mm</td></tr>
+<tr><td>Pixel pitch</td><td>0.117 mm/px (≈ 217 ppi)</td><td>1 mm ≈ 8.5 px</td></tr>
+<tr><td>입력</td><td>정전식 터치 + 외부 Encoder(Jog) + Jog S/W</td><td>Jog·Jog S/W는 외부 장치, 화면에는 상태만 표시</td></tr>
+<tr><td>통신</td><td>UDP client → 218.147.152.41 : 5502</td><td>값 변경 시 즉시 송신</td></tr>
+<tr><td>색 깊이</td><td>RGB565 권장</td><td>아래 색상표에 16bit 값 병기</td></tr>
+</tbody>
+</table>
+
+<h2 style="font:600 20px/1.15 var(--font-heading);margin:22px 0 8px">2. 공통 레이아웃</h2>
+<p style="font-size:13px;line-height:1.6;margin:0 0 10px">모든 화면은 3단 고정 구조입니다. 상단바와 조그바는 화면이 바뀌어도 위치·높이가 동일하므로 LVGL에서 한 번만 생성하고 내용만 교체하십시오.</p>
+<div style="display:flex;gap:16px;align-items:flex-start;margin-bottom:12px;break-inside:avoid">
+<div style="width:400px;height:240px;border:1px solid var(--color-text);display:flex;flex-direction:column;flex:none">
+<div style="height:22px;background:var(--color-accent-900);color:#f2f2f3;font:600 10px/22px var(--font-heading);letter-spacing:.1em;padding-left:8px">TOP BAR · y 0–43 · h 44</div>
+<div style="flex:1;display:flex;align-items:center;justify-content:center;font:600 12px/1 var(--font-heading);color:var(--color-neutral-600);border-bottom:1px solid var(--color-divider)">CONTENT · y 44–415 · h 372</div>
+<div style="height:32px;background:var(--color-neutral-200);font:600 10px/32px var(--font-heading);letter-spacing:.1em;padding-left:8px">JOG BAR · y 416–479 · h 64</div>
+</div>
+<table class="table" style="flex:1">
+<thead><tr><th style="text-align:left">영역</th><th style="text-align:left">x, y, w, h</th><th style="text-align:left">내부 여백</th></tr></thead>
+<tbody>
+<tr><td>Top bar</td><td>0, 0, 800, 44</td><td>좌우 14</td></tr>
+<tr><td>Content</td><td>0, 44, 800, 372</td><td>12 (상하좌우)</td></tr>
+<tr><td>Jog bar</td><td>0, 416, 800, 64</td><td>좌우 12, 상단 1px 구분선</td></tr>
+<tr><td>Content 작업영역</td><td>12, 56, 776, 348</td><td>모든 화면 공통</td></tr>
+</tbody>
+</table>
+</div>
+
+<h3 style="font:600 15px/1.2 var(--font-heading);margin:16px 0 6px">2.1 상단바 구성 (전 화면 공통)</h3>
+<table class="table" style="width:100%">
+<thead><tr><th style="text-align:left">요소</th><th style="text-align:left">x, y, w, h</th><th style="text-align:left">폰트</th><th style="text-align:left">내용 · 규칙</th></tr></thead>
+<tbody>
+<tr><td>Brand</td><td>14, 12, 112, 19</td><td>Cond 600 / 19</td><td>"GTS CONSOLE" 고정</td></tr>
+<tr><td>MyID chip</td><td>138, 9, 86, 26</td><td>Cond 600 / 18</td><td>"MyID : 01" · 콘솔 자기 ID, 항상 표시</td></tr>
+<tr><td>Screen title</td><td>237, 13, auto, 22</td><td>Body 400 / 14</td><td>화면명 (영문 / 한글)</td></tr>
+<tr><td>Device chip</td><td>482, 8, 105, 29</td><td>Cond 600 / 19</td><td>"AOS · ID 07" · 선택 장치, 1px 테두리</td></tr>
+<tr><td>Link dot</td><td>601, 18, 8, 8</td><td>—</td><td>연결 OK 초록 / 실패 적색</td></tr>
+<tr><td>Link label</td><td>615, 10, auto, 23</td><td>Body 400 / 15</td><td>LINK / NO REPLY</td></tr>
+<tr><td>Server</td><td>661, 10, 123, 23</td><td>Body 400 / 15, 60% 불투명</td><td>"218.147.152.41:5502"</td></tr>
+</tbody>
+</table>
+
+<h3 style="font:600 15px/1.2 var(--font-heading);margin:16px 0 6px">2.2 조그바 구성 (전 화면 공통)</h3>
+<table class="table" style="width:100%">
+<thead><tr><th style="text-align:left">요소</th><th style="text-align:left">x, y, w, h</th><th style="text-align:left">폰트</th><th style="text-align:left">내용</th></tr></thead>
+<tbody>
+<tr><td>"Jog target" 라벨</td><td>12, 424, 132, 19</td><td>Cond 600 / 13, 자간 0.1em</td><td>고정 문자열</td></tr>
+<tr><td>대상명</td><td>12, 443, 132, 26</td><td>Cond 600 / 22</td><td>현재 jog 대상 (예: HV, DEVICE ID)</td></tr>
+<tr><td>구분선</td><td>156, 426, 1, 42</td><td>—</td><td>divider 색</td></tr>
+<tr><td>현재값</td><td>171, 422, auto, 46</td><td>Cond 600 / 38, tabular</td><td>선택 항목의 현재값</td></tr>
+<tr><td>단위·범위</td><td>값 우측 +7, 442</td><td>Body 400 / 16</td><td>"V (0 – 200)" 형식</td></tr>
+<tr><td>전환 버튼</td><td>STEP 배지 좌측, 높이 44, 폭 가변 (간격 12)</td><td>Cond 600 / 12 + 17</td><td>P2·P3·P4에 표시. "DEVICE / 장치 변경", "GO TO / MANUAL ▸", "GO TO / 자동측정"</td></tr>
+<tr><td>STEP 배지</td><td>674, 425, 112, 44</td><td>Cond 600 / 18·19</td><td><b>PAGE 4에만 표시</b> · accent 채움 · 전환 버튼의 오른쪽 끝</td></tr>
+</tbody>
+</table>
+
+<h2 style="font:600 20px/1.15 var(--font-heading);margin:22px 0 8px">3. 색상 토큰</h2>
+<table class="table" style="width:100%">
+<thead><tr><th style="text-align:left">역할</th><th style="text-align:left">HEX</th><th style="text-align:left">RGB565</th><th style="text-align:left">사용처</th></tr></thead>
+<tbody>
+<tr><td>bg</td><td>#F2F2F3</td><td>0xF79E</td><td>화면 바탕</td></tr>
+<tr><td>text</td><td>#1D1F20</td><td>0x18E4</td><td>기본 글자</td></tr>
+<tr><td>accent</td><td>#5980A6</td><td>0x5C14</td><td>선택 채움, 주 버튼, 게이지</td></tr>
+<tr><td>accent-100</td><td>#EEF6FF</td><td>0xEFBF</td><td>선택 타일 배경</td></tr>
+<tr><td>accent-700</td><td>#416180</td><td>0x4310</td><td>강조 수치 (남은 시간 등)</td></tr>
+<tr><td>accent-900</td><td>#1D2D3D</td><td>0x1967</td><td>상단바 바탕, ON 상태 버튼</td></tr>
+<tr><td>neutral-100</td><td>#F5F5F8</td><td>0xF7BF</td><td>조그바 바탕</td></tr>
+<tr><td>neutral-200</td><td>#E7E7EA</td><td>0xE73D</td><td>비활성 배지 바탕</td></tr>
+<tr><td>neutral-300</td><td>#D4D4D7</td><td>0xD6BA</td><td>게이지 트랙</td></tr>
+<tr><td>neutral-600</td><td>#7A7A7D</td><td>0x7BCF</td><td>보조 텍스트</td></tr>
+<tr><td>divider</td><td>#D0D0D1</td><td>0xD69A</td><td>1px 테두리·구분선</td></tr>
+<tr><td>MyID chip 바탕</td><td>#3F4C5A</td><td>0x3A6B</td><td>상단바 위 칩 (16% 화이트 합성값)</td></tr>
+<tr><td>state OK</td><td>#9FE0B4</td><td>0x9F16</td><td>LINK 표시등</td></tr>
+<tr><td>state FAIL</td><td>#E0A39F</td><td>0xE513</td><td>NO REPLY 표시등</td></tr>
+</tbody>
+</table>
+<p style="font-size:11.5px;color:var(--color-neutral-600);margin:6px 0 0">테두리는 모두 1px, 선택 상태는 2px accent. 라운드 없음(radius 0). 비활성 요소는 불투명도 40–45%.</p>
+
+<h2 style="font:600 20px/1.15 var(--font-heading);margin:22px 0 8px">4. 타이포그래피</h2>
+<table class="table" style="width:100%">
+<thead><tr><th style="text-align:left">용도</th><th style="text-align:left">px</th><th style="text-align:left">실물 높이</th><th style="text-align:left">폰트</th></tr></thead>
+<tbody>
+<tr><td>섹션 라벨 / 배지</td><td>13</td><td>1.5 mm</td><td>Barlow Condensed 600, 자간 0.1em, 대문자</td></tr>
+<tr><td>보조 설명</td><td>14–15</td><td>1.6–1.8 mm</td><td>Barlow 400</td></tr>
+<tr><td>본문 · 표 값</td><td>16</td><td>1.9 mm</td><td>Barlow 400/500</td></tr>
+<tr><td>항목명 (타일 라벨)</td><td>21</td><td>2.5 mm</td><td>Barlow Condensed 600</td></tr>
+<tr><td>조그 대상명</td><td>22</td><td>2.6 mm</td><td>Barlow Condensed 600</td></tr>
+<tr><td>버튼</td><td>24–34</td><td>2.8–4.0 mm</td><td>Barlow Condensed 600, 자간 0.08em</td></tr>
+<tr><td>타일 값</td><td>40</td><td>4.7 mm</td><td>Barlow Condensed 600, tabular</td></tr>
+<tr><td>조그바 값 / 큰 수치</td><td>38–56</td><td>4.4–6.5 mm</td><td>Barlow Condensed 600, tabular</td></tr>
+</tbody>
+</table>
+<p style="font-size:12.5px;line-height:1.6;margin:8px 0 0"><b>한글 글리프 주의.</b> Barlow / Barlow Condensed에는 한글이 없습니다. LVGL 폰트 변환 시 ① 영문·숫자는 Barlow Condensed SemiBold + Barlow Regular, ② 한글 보조 라벨은 별도 한글 폰트(예: Pretendard, Noto Sans KR)를 <b>사용 문자만 서브셋</b>하여 13·14·15·16px 4종만 생성하면 플래시 사용량을 줄일 수 있습니다. 숫자는 tabular(고정폭) 옵션으로 변환해야 값이 바뀔 때 흔들리지 않습니다.</p>
+
+<h2 style="font:600 20px/1.15 var(--font-heading);margin:22px 0 8px">5. 화면별 사양</h2>
+
+<h3 style="font:600 16px/1.2 var(--font-heading);margin:14px 0 6px">5.1 PAGE 1 — Device Select / 장치 선택</h3>
+<table class="table" style="width:100%">
+<thead><tr><th style="text-align:left">요소</th><th style="text-align:left">x, y, w, h</th><th style="text-align:left">동작</th></tr></thead>
+<tbody>
+<tr><td>"Device Type" 라벨</td><td>12, 56, 300, 19</td><td>—</td></tr>
+<tr><td>AOS 버튼</td><td>12, 81, 147, 52</td><td>터치 선택 · 선택 시 accent 채움</td></tr>
+<tr><td>GFC 버튼</td><td>167, 81, 145, 52</td><td>동일, 상호 배타</td></tr>
+<tr><td>"Device ID" 라벨</td><td>12, 147, 300, 19</td><td>—</td></tr>
+<tr><td>ID 버튼 그리드</td><td>12, 172, 301, 194</td><td>5열 × 4행, 셀 55 × 44, 간격 6 (열 피치 61, 행 피치 50)</td></tr>
+<tr><td>Connection Test 카드</td><td>324, 56, 462, 346</td><td>1px 테두리 + 코너 마크 11px</td></tr>
+<tr><td>카드 제목</td><td>339, 69, 432, 19</td><td>—</td></tr>
+<tr><td>정보 행 6개</td><td>339, 96 부터 행 높이 38</td><td>좌: 라벨 14px / 우: 값 16px, 하단 1px 선</td></tr>
+<tr><td>RE-TEST 버튼</td><td>339, 343, 119, 46</td><td>재연결 시도</td></tr>
+<tr><td>ENTER CONTROL 버튼</td><td>466, 343, 305, 46</td><td>accent 채움 · 장치 종류에 따라 P2 또는 P3로 이동</td></tr>
+<tr><td>조그바</td><td>대상 = DEVICE ID</td><td>Jog 회전 시 ID 1↔20 순환, STEP 표시 없음</td></tr>
+</tbody>
+</table>
+<p style="font-size:12px;color:var(--color-neutral-700);margin:6px 0 0">정보 행 순서: Target / UDP Server / Link / Model("GTS CONSOLE ID : n") / Device State / Last Reply.</p>
+
+<h3 style="font:600 16px/1.2 var(--font-heading);margin:14px 0 6px">5.2 PAGE 2 — GFC Mode / 펌프 제어</h3>
+<table class="table" style="width:100%">
+<thead><tr><th style="text-align:left">요소</th><th style="text-align:left">x, y, w, h</th><th style="text-align:left">동작</th></tr></thead>
+<tbody>
+<tr><td>"Control Mode" 라벨</td><td>12, 67, 224, 19</td><td>—</td></tr>
+<tr><td>MANUAL 탭</td><td>545, 57, 120, 38</td><td>선택 시 accent 채움</td></tr>
+<tr><td>AUTO 탭</td><td>665, 57, 120, 38</td><td>기본 선택</td></tr>
+<tr><td>시간 타일 ①<br>Start · Pump On Time</td><td>12, 106, 528, 144</td><td>값 0.1–60 sec, step 0.1 · 터치로 jog 대상 선택</td></tr>
+<tr><td>시간 타일 ②<br>10min Cycle · Pump On Time</td><td>12, 258, 528, 144</td><td>동일</td></tr>
+<tr><td>타일 내부</td><td>라벨 y+26 (13px) / 값 y+62 (56px) / 단위 15px</td><td>선택 시 2px accent 테두리 + accent-100 배경</td></tr>
+<tr><td>사이드 카드</td><td>550, 106, 236, 296</td><td>Auto: "Cycle / 10분 주기" + 카운트다운 48px + 진행바 6px<br>Manual: "Pump State" + ON/OFF 48px, 진행바 숨김</td></tr>
+<tr><td>메인 버튼</td><td>563, 295, 210, 66</td><td>Auto: AUTO START / AUTO STOP<br>Manual: PUMP ON / PUMP OFF</td></tr>
+<tr><td>주석</td><td>563, 367, 210, 22</td><td>"Stop 시 Pump1, Pump2 모두 Off"</td></tr>
+<tr><td>조그바</td><td>대상 = 선택된 시간 타일</td><td>Manual일 때 "—", 불투명도 40%, jog 무시</td></tr>
+<tr><td>"DEVICE / 장치 변경" 버튼</td><td>조그바 우측</td><td>연결 해제 후 P1 복귀</td></tr>
+</tbody>
+</table>
+<p style="font-size:12px;color:var(--color-neutral-700);margin:6px 0 0">Pump1 · Pump2는 항상 동시 구동. Manual 모드에서 시간 타일 2개는 불투명도 40%로 비활성, 터치 무반응.</p>
+
+<h3 style="font:600 16px/1.2 var(--font-heading);margin:14px 0 6px">5.3 PAGE 3 — AOS 가스 Data 측정</h3>
+<table class="table" style="width:100%">
+<thead><tr><th style="text-align:left">요소</th><th style="text-align:left">x, y, w, h</th><th style="text-align:left">동작</th></tr></thead>
+<tbody>
+<tr><td>"Data Type" 라벨</td><td>12, 56, 774, 19</td><td>—</td></tr>
+<tr><td>타입 카드 4개</td><td>y 85, h 100 · x = 12 / 207 / 402 / 599, w ≈ 187 (간격 8)</td><td>preTest · 1 hour · 2 hour · 8 hour(full data)</td></tr>
+<tr><td>카드 내부</td><td>이름 28px (상단 +12) / 소요시간 15px / 비고 14px (하단)</td><td>선택 시 2px accent 테두리</td></tr>
+<tr><td>측정 상태 카드</td><td>12, 195, 568, 207</td><td>1px 테두리 + 코너 마크</td></tr>
+<tr><td>Elapsed</td><td>27, 208, auto, 75</td><td>라벨 13px + 값 50px (hh:mm:ss)</td></tr>
+<tr><td>Remaining</td><td>우측 정렬, 376, 224</td><td>값 34px, accent-700</td></tr>
+<tr><td>진행 바</td><td>27, 351, 538, 10</td><td>트랙 neutral-300 / 채움 accent</td></tr>
+<tr><td>진행 캡션</td><td>27, 367, 538, 22</td><td>좌: 샘플 수 / 우: "측정 종료 시 자동 Stop"</td></tr>
+<tr><td>START·STOP 버튼</td><td>590, 195, 196, 207</td><td>실행 중 accent-900 + "STOP", 대기 accent + "START"</td></tr>
+<tr><td>조그바</td><td>대상 = DATA TYPE</td><td>Jog 회전 = 4종 순환 선택, STEP 표시 없음</td></tr>
+<tr><td>"DEVICE / 장치 변경" 버튼</td><td>조그바 우측</td><td>연결 해제 후 P1 복귀</td></tr>
+<tr><td>"GO TO / MANUAL ▸" 버튼</td><td>조그바 최우측</td><td>P4로 전환 · 측정 중에는 비활성(45%)</td></tr>
+</tbody>
+</table>
+<p style="font-size:12px;color:var(--color-neutral-700);margin:6px 0 0">측정 종료 시 펌웨어가 자동으로 Stop 상태로 전환하고 진행 바를 100%로 유지합니다.</p>
+
+<h3 style="font:600 16px/1.2 var(--font-heading);margin:14px 0 6px">5.4 PAGE 4 — AOS Manual Mode</h3>
+<table class="table" style="width:100%">
+<thead><tr><th style="text-align:left">요소</th><th style="text-align:left">x, y, w, h</th><th style="text-align:left">동작</th></tr></thead>
+<tbody>
+<tr><td>제어 타일 6개</td><td>3열 × 2행 · 각 253 × 140 · x = 12 / 273 / 533, y = 56 / 204 (간격 8)</td><td>터치 = jog 대상 선택</td></tr>
+<tr><td>타일 내부</td><td>항목명 21px (좌상) / 범위 16px (우상) / 값 40px + 단위 16px (중앙) / 한글 16px (좌하) / STEP 배지 19px (우하, 99–114 × 27)</td><td>선택 시 2px accent 테두리 + accent-100</td></tr>
+<tr><td>LF_MODE 버튼</td><td>12, 352, 230, 50</td><td>On/Off 토글 · Off 시 LF_Frq·LF_Volt 타일 45% 비활성</td></tr>
+<tr><td>안내 박스</td><td>250, 352, 536, 50</td><td>"LF_Mode Off 시 LF_Frq · LF_Volt 항목은 비활성화됩니다."</td></tr>
+<tr><td>"DEVICE / 장치 변경" 버튼</td><td>조그바 우측, STEP 배지 좌측</td><td>연결 해제 후 P1 복귀</td></tr>
+<tr><td>"GO TO / 자동측정" 버튼</td><td>DEVICE 버튼 우측, STEP 배지 좌측 · 두 버튼 모두 126 × 44 동일 크기</td><td>P3로 전환</td></tr>
+<tr><td>조그바 STEP 배지</td><td>674, 425, 112, 44</td><td>선택 항목의 현재 step (외부 Jog S/W로 변경)</td></tr>
+</tbody>
+</table>
+<p style="font-size:12.5px;margin:10px 0 6px"><b>타일 배치 순서와 값 규격</b></p>
+<table class="table" style="width:100%">
+<thead><tr><th style="text-align:left">위치</th><th style="text-align:left">항목</th><th style="text-align:left">범위</th><th style="text-align:left">step (Jog S/W 순환)</th><th style="text-align:left">표시 자리수</th></tr></thead>
+<tbody>
+<tr><td>1행 1열</td><td>HV</td><td>0 – 200 V</td><td>0.01 / 0.1 / 1</td><td>소수 2자리</td></tr>
+<tr><td>1행 2열</td><td>Frq</td><td>200 – 800 kHz</td><td>0.1 / 1 / 10</td><td>소수 1자리</td></tr>
+<tr><td>1행 3열</td><td>Duty</td><td>10 – 50 %</td><td>0.01 / 0.1</td><td>소수 2자리</td></tr>
+<tr><td>2행 1열</td><td>CV</td><td>−5 – 5 V</td><td>0.001 / 0.01 / 0.1</td><td>소수 3자리</td></tr>
+<tr><td>2행 2열</td><td>LF_Frq</td><td>50 – 200 Hz</td><td>1</td><td>정수</td></tr>
+<tr><td>2행 3열</td><td>LF_Volt</td><td>0 – 5 V</td><td>0.01 / 0.1</td><td>소수 2자리</td></tr>
+</tbody>
+</table>
+
+<h2 style="font:600 20px/1.15 var(--font-heading);margin:22px 0 8px">6. 터치 · 입력 규칙</h2>
+<table class="table" style="width:100%">
+<thead><tr><th style="text-align:left">규칙</th><th style="text-align:left">값</th></tr></thead>
+<tbody>
+<tr><td>최소 터치 타겟</td><td>44 × 44 px (≈ 5.1 mm) — ID 버튼 55 × 44가 최소 크기</td></tr>
+<tr><td>터치 간격</td><td>최소 6 px</td></tr>
+<tr><td>피드백</td><td>Press 시 accent-700 채움 또는 2px 테두리, 100 ms 이내 반영</td></tr>
+<tr><td>Jog (외부 encoder)</td><td>1 detent = 현재 step 1회 증감, 범위 clamp, 순환 없음 (선택형 항목만 순환)</td></tr>
+<tr><td>Jog S/W (외부)</td><td>선택 항목의 step 순환. 화면은 STEP 배지 값만 갱신</td></tr>
+<tr><td>값 변경 → 송신</td><td>변경 즉시 UDP 전송. 연속 회전 시 50 ms 디바운스 권장</td></tr>
+</tbody>
+</table>
+
+<h2 style="font:600 20px/1.15 var(--font-heading);margin:22px 0 8px">7. 화면 전이 · 상태</h2>
+<pre>  [P1] Device Select
+        │  ENTER CONTROL (연결 성공 시에만 활성)
+        ├─ dev_type = GFC ─▶ [P2] GFC Mode ─┬─ Manual : PUMP ON/OFF
+        │                                   └─ Auto   : 시간 2종 + AUTO START/STOP
+        └─ dev_type = AOS ─▶ [P3] AOS 가스측정 ◀──▶ [P4] AOS Manual
+                               (조그바의 "GO TO / MANUAL ▸" · "GO TO / 자동측정" 버튼)
+  [P2] GFC 내부 모드 전환 : 상단 MANUAL / AUTO 탭
+  [P2·P3·P4] ─ 조그바 "DEVICE / 장치 변경" ─▶ 연결 해제 후 [P1] 복귀
+  모든 화면 ─ 연결 끊김(응답 3회 없음) ─▶ [P1] 복귀 + NO REPLY 표시</pre>
+<table class="table" style="width:100%">
+<thead><tr><th style="text-align:left">전역 상태</th><th style="text-align:left">값</th><th style="text-align:left">비고</th></tr></thead>
+<tbody>
+<tr><td>my_id</td><td>1 – 20</td><td>콘솔 자기 ID, 상단바 상시 표시</td></tr>
+<tr><td>dev_type</td><td>AOS / GFC</td><td>P1에서 선택</td></tr>
+<tr><td>dev_id</td><td>1 – 20</td><td>P1에서 선택</td></tr>
+<tr><td>link_state</td><td>IDLE / TESTING / ONLINE / NO_REPLY</td><td>상단바 표시등</td></tr>
+<tr><td>gfc_mode</td><td>MANUAL / AUTO</td><td>기본 AUTO</td></tr>
+<tr><td>pump_on</td><td>bool</td><td>Pump1·Pump2 동시</td></tr>
+<tr><td>gfc_start_sec / gfc_cycle_sec</td><td>0.1 – 60.0</td><td>0.1 단위</td></tr>
+<tr><td>aos_type</td><td>0 preTest / 1 · 1h / 2 · 2h / 3 · 8h</td><td>—</td></tr>
+<tr><td>aos_running, aos_elapsed</td><td>bool, sec</td><td>종료 시 자동 정지</td></tr>
+<tr><td>hv, frq, duty, cv, lf_frq, lf_volt</td><td>5.4 표 참조</td><td>각각 step index 보유</td></tr>
+<tr><td>lf_on</td><td>bool</td><td>Off 시 LF 항목 비활성</td></tr>
+</tbody>
+</table>
+
+<h2 style="font:600 20px/1.15 var(--font-heading);margin:22px 0 8px">8. LVGL 구현 매핑</h2>
+<table class="table" style="width:100%">
+<thead><tr><th style="text-align:left">UI 요소</th><th style="text-align:left">권장 위젯</th><th style="text-align:left">메모</th></tr></thead>
+<tbody>
+<tr><td>화면 4종</td><td><code>lv_obj</code> 4개 (screen 또는 컨테이너)</td><td>상단바·조그바는 공용 컨테이너로 두고 내용만 갱신</td></tr>
+<tr><td>상단바 / 조그바</td><td><code>lv_obj</code> + <code>lv_label</code></td><td>재생성 금지, 텍스트만 <code>lv_label_set_text_fmt</code></td></tr>
+<tr><td>Device ID 20개</td><td><code>lv_btnmatrix</code> (5 × 4)</td><td>CHECKABLE + ONE_CHECKED, <code>lv_btnmatrix_set_btn_width</code> 균등</td></tr>
+<tr><td>AOS / GFC, MANUAL / AUTO</td><td><code>lv_btnmatrix</code> 1행 2열</td><td>세그먼트 컨트롤 대용</td></tr>
+<tr><td>값 타일 (P2 · P4)</td><td><code>lv_obj</code> + 라벨 3개</td><td>선택 시 <code>lv_obj_set_style_border_width(2)</code> + accent-100 배경</td></tr>
+<tr><td>진행 바</td><td><code>lv_bar</code></td><td>높이 6 / 10, radius 0</td></tr>
+<tr><td>큰 버튼</td><td><code>lv_btn</code> + <code>lv_label</code></td><td>radius 0, 그림자 없음</td></tr>
+<tr><td>연결 정보 표</td><td><code>lv_obj</code> flex row 6개</td><td><code>lv_table</code>은 스타일 제약이 커서 비권장</td></tr>
+<tr><td>코너 마크 (+)</td><td>선택 사항</td><td>장식 요소. 생략 가능, 유지 시 11px 라인 2개로 구현</td></tr>
+</tbody>
+</table>
+<pre>/* 공통 스타일 예시 */
+static lv_style_t st_card, st_card_sel;
+lv_style_init(&amp;st_card);
+lv_style_set_radius(&amp;st_card, 0);
+lv_style_set_bg_opa(&amp;st_card, LV_OPA_TRANSP);
+lv_style_set_border_width(&amp;st_card, 1);
+lv_style_set_border_color(&amp;st_card, lv_color_hex(0xD0D0D1));
+
+lv_style_init(&amp;st_card_sel);
+lv_style_set_border_width(&amp;st_card_sel, 2);
+lv_style_set_border_color(&amp;st_card_sel, lv_color_hex(0x5980A6));
+lv_style_set_bg_opa(&amp;st_card_sel, LV_OPA_COVER);
+lv_style_set_bg_color(&amp;st_card_sel, lv_color_hex(0xEEF6FF));
+
+/* 조그 입력 → 현재 선택 항목 값 증감 */
+void jog_rotate(int8_t dir) {
+    ctrl_t *c = &amp;ctrl[sel_idx];              /* HV, Frq, Duty, CV, LF_Frq, LF_Volt */
+    c-&gt;value = clampf(c-&gt;value + dir * c-&gt;step[c-&gt;step_idx], c-&gt;min, c-&gt;max);
+    lv_label_set_text_fmt(c-&gt;lbl_value, "%.*f", c-&gt;decimals, c-&gt;value);
+    udp_send_param(c-&gt;param_id, c-&gt;value);   /* 값 변경 즉시 송신 */
+}</pre>
+
+<h2 style="font:600 20px/1.15 var(--font-heading);margin:22px 0 8px">9. UDP 프로토콜</h2>
+<p style="font-size:13px;line-height:1.6;margin:0 0 8px"><b>상태: 준비 중 (미확정).</b> 아래는 화면 동작에 필요한 <b>전송 시점 정의</b>이며, 패킷 포맷이 확정되면 본 절만 교체하면 됩니다.</p>
+<table class="table" style="width:100%">
+<thead><tr><th style="text-align:left">시점</th><th style="text-align:left">방향</th><th style="text-align:left">필요 데이터</th></tr></thead>
+<tbody>
+<tr><td>장치 선택 후 연결 확인</td><td>콘솔 → 서버</td><td>my_id, dev_type, dev_id</td></tr>
+<tr><td>장치 변경 (연결 해제)</td><td>콘솔 → 서버</td><td>현재 dev_id 해제 요청 · 진행 중 동작은 정지 후 해제</td></tr>
+<tr><td>연결 응답</td><td>서버 → 콘솔</td><td>link 상태, 장비 상태(IDLE / RUN), RTT</td></tr>
+<tr><td>GFC Manual Pump On/Off</td><td>콘솔 → 서버</td><td>dev_id, pump_on</td></tr>
+<tr><td>GFC Auto 시간 변경</td><td>콘솔 → 서버</td><td>start_sec, cycle_sec (0.1 단위)</td></tr>
+<tr><td>GFC Auto Start / Stop</td><td>콘솔 → 서버</td><td>auto_run</td></tr>
+<tr><td>AOS 측정 타입 선택 · Start / Stop</td><td>콘솔 → 서버</td><td>aos_type, run</td></tr>
+<tr><td>AOS 측정 진행</td><td>서버 → 콘솔</td><td>elapsed, 총 샘플 수, 종료 플래그</td></tr>
+<tr><td>AOS Manual 값 변경 (6종)</td><td>콘솔 → 서버</td><td>param_id, value</td></tr>
+<tr><td>LF_Mode On/Off</td><td>콘솔 → 서버</td><td>lf_on</td></tr>
+<tr><td>주기 상태 갱신</td><td>서버 → 콘솔</td><td>다음 분사까지 남은 시간</td></tr>
+</tbody>
+</table>
+<p style="font-size:12px;color:var(--color-neutral-700);margin:8px 0 0">필요 시 참고용 초안: <code>0xAA | LEN | CMD | MY_ID | DEV_TYPE | DEV_ID | PAYLOAD(n) | CRC16</code> — 확정 포맷 주시면 표와 함께 정리해 드리겠습니다.</p>
+
+<h2 style="font:600 20px/1.15 var(--font-heading);margin:22px 0 8px">10. 구현 체크리스트</h2>
+<ol style="font-size:13px;line-height:1.75;margin:0;padding-left:20px">
+<li>LVGL 폰트 변환 — 영문 Barlow Condensed 600 (13/16/19/21/22/28/34/38/40/48/56), 한글 서브셋 (13/14/15/16)</li>
+<li>공용 상단바 · 조그바 컨테이너 1회 생성, 화면 전환 시 내용만 교체</li>
+<li>화면 4종 컨테이너 생성 및 전이 로직 (7절)</li>
+<li>외부 encoder / Jog S/W 드라이버 → 선택 항목 값·step 반영 (6절)</li>
+<li>값 clamp · 자리수 포맷 (5.4 표)</li>
+<li>UDP 송수신 태스크 + 무응답 3회 시 P1 복귀</li>
+<li>AOS 측정 종료 자동 Stop, GFC 10분 주기 타이머</li>
+<li>실기 시인성 확인 후 폰트 크기 조정 (필요 시 라벨 13 → 15px)</li>
+</ol>
+
+</doc-page>
+</x-dc>
+</body>
+</html>

@@ -1,0 +1,11 @@
+# GTS_CONSOLE_ESP32P4 — 16 MB flash, single app
+# JC4880P443C_Demo 와 동일한 배치. 바꾸지 말 것.
+#
+# Total flash: 16 MB (0x1000000)
+# Bootloader:  0x2000 – 0x8FFF   (28 KB — CONFIG_PARTITION_TABLE_OFFSET=0x9000)
+# Part table:  0x9000 – 0x9FFF
+#
+# Name,     Type, SubType,  Offset,   Size,    Flags
+nvs,        data, nvs,      0xA000,   0x6000,
+phy_init,   data, phy,      0x10000,  0x1000,
+factory,    app,  factory,  0x20000,  0xFE0000,

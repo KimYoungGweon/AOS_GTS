@@ -1,0 +1,566 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet data-dc-atomics>
+<meta name="design_doc_mode" content="canvas">
+<link rel="stylesheet" href="_ds/industry-2161c2d8-76ef-40bb-8456-498e59407883/styles.css">
+<script src="_ds/industry-2161c2d8-76ef-40bb-8456-498e59407883/_ds_bundle.js"></script>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Barlow:wght@400;500;600&family=Barlow+Condensed:wght@500;600;700&display=swap">
+<style>
+body{margin:0;background:#e4e4e6;font-family:var(--font-body)}
+a{color:var(--color-accent-700)}a:hover{color:var(--color-accent-900)}
+button{font-family:inherit}
+</style>
+</helmet>
+
+<div style="padding:40px 44px 56px;display:flex;flex-direction:column;gap:28px">
+
+<div style="display:flex;gap:40px;align-items:flex-start;max-width:1660px">
+<div style="flex:1;min-width:0">
+<div style="font:600 19px/1 var(--font-heading);letter-spacing:.16em;text-transform:uppercase;color:var(--color-accent-700);margin-bottom:8px">GTS Console · ESP32-P4 / JC4880P443C</div>
+<h2 style="font:600 34px/1.05 var(--font-heading);margin:0 0 10px">LCD UI mockups — 800 × 480 (H mode) · 4.3″</h2>
+<p style="margin:0;font-size:14px;line-height:1.6;max-width:640px;color:var(--color-neutral-700)">문서의 5화면 구성을 그대로 옮겼습니다. 라벨은 영문 + 한글 보조, 선택 항목은 굵은 테두리로 표시하고, 화면 하단에는 고정 조그 바(선택 항목 / 현재값)를 두었습니다. AOS Manual 화면에만 제어 항목별 STEP 값을 함께 표시합니다.</p>
+</div>
+<div class="blueprint" style="width:330px;flex:none;padding:14px 16px;background:transparent">
+<i class="corner tl"></i><i class="corner tr"></i><i class="corner bl"></i><i class="corner br"></i>
+<div style="font:600 19px/1 var(--font-heading);letter-spacing:.1em;text-transform:uppercase;color:var(--color-neutral-600);margin-bottom:8px">Assumptions / 전제</div>
+<ul style="margin:0;padding-left:16px;font-size:15px;line-height:1.65;color:var(--color-neutral-800)">
+<li>상단바 44px — 장비 연결 상태, Device 종류·ID 상시 표시</li>
+<li>하단 조그바 64px — 조그 대상과 현재값 표시 (jog / jog S/W는 외부 장치)</li>
+<li>터치 타겟 최소 44px (실험실 벤치, 맨손 기준)</li>
+<li>UDP 218.147.152.41 : 5502 값 변경 시 즉시 전송</li>
+<li>AOS 선택 시 기본 진입 화면은 Manual Mode (PAGE 4)</li>
+</ul>
+</div>
+</div>
+
+<div style="display:flex;flex-wrap:wrap;gap:44px">
+
+<div style="display:flex;flex-direction:column;gap:10px">
+<div style="display:flex;align-items:baseline;gap:10px"><span style="font:600 21px/1 var(--font-heading);letter-spacing:.1em;padding:4px 7px;background:var(--color-accent-900);color:#f2f2f3">01</span><span style="font:600 18px/1 var(--font-heading);letter-spacing:.04em;text-transform:uppercase">Device Select · 장치 선택</span></div>
+<div class="blueprint" style="width:800px;height:480px;display:flex;flex-direction:column;overflow:hidden;background:var(--color-bg);box-shadow:var(--shadow-md)">
+<i class="corner tl"></i><i class="corner tr"></i><i class="corner bl"></i><i class="corner br"></i>
+
+<div style="height:44px;flex:none;display:flex;align-items:center;justify-content:space-between;padding:0 14px;background:{{ barBg }};color:{{ barFg }}">
+<div style="display:flex;align-items:baseline;gap:12px"><span style="font:700 25px/1 var(--font-heading);letter-spacing:.08em">GTS CONSOLE</span><span style="font:600 18px/1 var(--font-heading);letter-spacing:.1em;padding:3px 7px;background:rgba(242,242,243,.16);border:1px solid rgba(242,242,243,.35)">MyID : {{ myIdText }}</span><span style="font-size:14px;opacity:.7;letter-spacing:.08em">DEVICE SELECT / 장치 선택</span></div>
+<div style="display:flex;align-items:center;gap:14px;font-size:15px">
+<span style="font:600 19px/1 var(--font-heading);letter-spacing:.08em;padding:4px 8px;border:1px solid rgba(242,242,243,.45)">{{ devType }} · ID {{ devIdText }}</span>
+<span style="display:flex;align-items:center;gap:6px"><span style="width:8px;height:8px;background:{{ linkDot }};display:block"></span>{{ linkText }}</span>
+<span style="opacity:.6">218.147.152.41:5502</span>
+</div>
+</div>
+
+<div style="flex:1;min-height:0;display:flex;gap:12px;padding:12px">
+<div style="width:300px;flex:none;display:flex;flex-direction:column">
+<div style="font:600 19px/1 var(--font-heading);letter-spacing:.1em;text-transform:uppercase;color:var(--color-neutral-600);margin-bottom:6px">Device Type / 장치 종류</div>
+<div style="display:flex;gap:8px">
+<button onClick="{{ pickAOS }}" style="flex:1;height:52;height:52px;border:1px solid var(--color-divider);border-radius:2px;cursor:pointer;font:600 28px/1 var(--font-heading);letter-spacing:.06em;background:{{ aosBg }};color:{{ aosFg }};border-width:{{ aosBw }};border-color:{{ aosBc }}">AOS</button>
+<button onClick="{{ pickGFC }}" style="flex:1;height:52px;border:1px solid var(--color-divider);border-radius:2px;cursor:pointer;font:600 28px/1 var(--font-heading);letter-spacing:.06em;background:{{ gfcBg }};color:{{ gfcFg }};border-width:{{ gfcBw }};border-color:{{ gfcBc }}">GFC</button>
+</div>
+<div style="font:600 19px/1 var(--font-heading);letter-spacing:.1em;text-transform:uppercase;color:var(--color-neutral-600);margin:14px 0 6px">Device ID / 장치 번호 · 1–20</div>
+<div style="display:grid;grid-template-columns:repeat(5,1fr);gap:6px">
+<sc-for list="{{ ids }}" as="d" hint-placeholder-count="20">
+<button onClick="{{ d.pick }}" style="height:44px;border-radius:2px;cursor:pointer;font:600 21px/1 var(--font-heading);font-variant-numeric:tabular-nums;border:1px solid var(--color-divider);background:{{ d.bg }};color:{{ d.fg }};border-width:{{ d.bw }};border-color:{{ d.bc }}">{{ d.n }}</button>
+</sc-for>
+</div>
+</div>
+
+<div class="blueprint" style="flex:1;min-width:0;padding:12px 14px;display:flex;flex-direction:column">
+<i class="corner tl"></i><i class="corner tr"></i><i class="corner bl"></i><i class="corner br"></i>
+<div style="font:600 19px/1 var(--font-heading);letter-spacing:.1em;text-transform:uppercase;color:var(--color-neutral-600);margin-bottom:8px">Connection Test / 연결 확인</div>
+<div style="display:flex;flex-direction:column">
+<sc-for list="{{ connRows }}" as="r" hint-placeholder-count="6">
+<div style="display:flex;justify-content:space-between;align-items:baseline;padding:6px 0;border-bottom:1px solid var(--color-divider);font-size:16px">
+<span style="color:var(--color-neutral-600);letter-spacing:.06em;font-size:14px;text-transform:uppercase">{{ r.k }}</span>
+<span style="font-variant-numeric:tabular-nums;font-weight:500">{{ r.v }}</span>
+</div>
+</sc-for>
+</div>
+<div style="flex:1"></div>
+<div style="display:flex;gap:8px">
+<button onClick="{{ retest }}" class="btn btn-secondary" style="height:46px;padding:0 14px;border-radius:2px">RE-TEST / 재연결</button>
+<button onClick="{{ enter }}" class="btn btn-primary" style="flex:1;height:46px;border-radius:2px;font-size:16px;letter-spacing:.06em">ENTER CONTROL / 진입 →</button>
+</div>
+</div>
+</div>
+
+<div style="height:64px;flex:none;display:flex;align-items:center;gap:8px;padding:0 10px;border-top:1px solid var(--color-divider);background:var(--color-neutral-100)">
+<div style="width:116px;flex:none"><div style="font:600 19px/1 var(--font-heading);letter-spacing:.1em;color:var(--color-neutral-600);text-transform:uppercase">Jog target</div><div style="font:600 22px/1.2 var(--font-heading)">DEVICE ID</div></div>
+<div style="flex:1;min-width:0;display:flex;align-items:baseline;gap:7px;border-left:1px solid var(--color-divider);padding-left:12px"><span style="font:600 38px/1 var(--font-heading);font-variant-numeric:tabular-nums">{{ devIdText }}</span><span style="font-size:16px;color:var(--color-neutral-600)">/ 20</span></div>
+</div>
+</div>
+</div>
+
+<div style="display:flex;flex-direction:column;gap:10px">
+<div style="display:flex;align-items:baseline;gap:10px"><span style="font:600 21px/1 var(--font-heading);letter-spacing:.1em;padding:4px 7px;background:var(--color-accent-900);color:#f2f2f3">02</span><span style="font:600 18px/1 var(--font-heading);letter-spacing:.04em;text-transform:uppercase">GFC Mode · 펌프 제어</span><span style="font-size:15px;color:var(--color-neutral-600)">Manual / Auto 탭 전환</span></div>
+<div class="blueprint" style="width:800px;height:480px;display:flex;flex-direction:column;overflow:hidden;background:var(--color-bg);box-shadow:var(--shadow-md)">
+<i class="corner tl"></i><i class="corner tr"></i><i class="corner bl"></i><i class="corner br"></i>
+
+<div style="height:44px;flex:none;display:flex;align-items:center;justify-content:space-between;padding:0 14px;background:{{ barBg }};color:{{ barFg }}">
+<div style="display:flex;align-items:baseline;gap:12px"><span style="font:700 25px/1 var(--font-heading);letter-spacing:.08em">GTS CONSOLE</span><span style="font:600 18px/1 var(--font-heading);letter-spacing:.1em;padding:3px 7px;background:rgba(242,242,243,.16);border:1px solid rgba(242,242,243,.35)">MyID : {{ myIdText }}</span><span style="font-size:14px;opacity:.7;letter-spacing:.08em">GFC MODE / 펌프 제어</span></div>
+<div style="display:flex;align-items:center;gap:14px;font-size:15px">
+<span style="font:600 19px/1 var(--font-heading);letter-spacing:.08em;padding:4px 8px;border:1px solid rgba(242,242,243,.45)">GFC · ID 03</span>
+<span style="display:flex;align-items:center;gap:6px"><span style="width:8px;height:8px;background:#9fe0b4;display:block"></span>LINK</span>
+<span style="opacity:.6">218.147.152.41:5502</span>
+</div>
+</div>
+
+<div style="flex:1;min-height:0;display:flex;flex-direction:column;padding:12px;gap:10px">
+<div style="display:flex;align-items:center;justify-content:space-between">
+<div style="font:600 19px/1 var(--font-heading);letter-spacing:.1em;text-transform:uppercase;color:var(--color-neutral-600)">Control Mode / 제어 모드</div>
+<div style="display:flex;border:1px solid var(--color-divider)">
+<button onClick="{{ gfcManual }}" style="width:120px;height:38px;border:0;cursor:pointer;font:600 21px/1 var(--font-heading);letter-spacing:.08em;background:{{ gm.bg }};color:{{ gm.fg }}">MANUAL</button>
+<button onClick="{{ gfcAuto }}" style="width:120px;height:38px;border:0;border-left:1px solid var(--color-divider);cursor:pointer;font:600 21px/1 var(--font-heading);letter-spacing:.08em;background:{{ ga.bg }};color:{{ ga.fg }}">AUTO</button>
+</div>
+</div>
+
+<div style="flex:1;min-height:0;display:flex;gap:10px">
+<div style="flex:1;min-width:0;display:grid;grid-template-rows:1fr 1fr;gap:8px">
+<sc-for list="{{ gfcTiles }}" as="t" hint-placeholder-count="2">
+<div onClick="{{ t.select }}" style="display:flex;flex-direction:column;justify-content:center;gap:12px;padding:14px 16px;cursor:pointer;border:1px solid var(--color-divider);background:{{ t.bg }};border-width:{{ t.bw }};border-color:{{ t.bc }};opacity:{{ t.op }}">
+<div style="font:600 19px/1.3 var(--font-heading);letter-spacing:.12em;text-transform:uppercase;color:var(--color-neutral-700)">{{ t.label }}</div>
+<div style="display:flex;align-items:flex-end;justify-content:space-between;gap:8px">
+<div style="display:flex;align-items:baseline;gap:6px"><span style="font:600 56px/1 var(--font-heading);font-variant-numeric:tabular-nums">{{ t.value }}</span><span style="font-size:15px;color:var(--color-neutral-600)">sec  ·  0.1 – 60</span></div>
+</div>
+</div>
+</sc-for>
+</div>
+<div class="blueprint" style="width:236px;flex:none;padding:12px;display:flex;flex-direction:column">
+<i class="corner tl"></i><i class="corner tr"></i><i class="corner bl"></i><i class="corner br"></i>
+<div style="font:600 19px/1 var(--font-heading);letter-spacing:.1em;text-transform:uppercase;color:var(--color-neutral-600)">{{ gfcSideLabel }}</div>
+<div style="font:600 48px/1 var(--font-heading);font-variant-numeric:tabular-nums;margin-top:8px;color:{{ gfcSideFg }}">{{ gfcCountdown }}</div>
+<div style="font-size:15px;color:var(--color-neutral-600);margin-top:2px">{{ gfcRunText }}</div>
+<sc-if value="{{ gfcIsAuto }}" hint-placeholder-val="{{ true }}"><div style="height:6px;background:var(--color-neutral-300);margin-top:10px"><div style="height:6px;background:var(--color-accent);width:{{ gfcProgress }}"></div></div></sc-if>
+<div style="flex:1"></div>
+<button onClick="{{ gfcToggleRun }}" style="height:66px;border:0;border-radius:2px;cursor:pointer;font:600 28px/1 var(--font-heading);letter-spacing:.08em;background:{{ gfcRunBg }};color:{{ gfcRunFg }}">{{ gfcRunLabel }}</button>
+<div style="font-size:14px;color:var(--color-neutral-600);margin-top:6px">{{ gfcRunNote }}</div>
+</div>
+</div>
+</div>
+
+<div style="height:64px;flex:none;display:flex;align-items:center;gap:8px;padding:0 10px;border-top:1px solid var(--color-divider);background:var(--color-neutral-100)">
+<div style="width:116px;flex:none"><div style="font:600 19px/1 var(--font-heading);letter-spacing:.1em;color:var(--color-neutral-600);text-transform:uppercase">Jog target</div><div style="font:600 22px/1.2 var(--font-heading);opacity:{{ gfcJogOp }}">{{ gfcJogName }}</div></div>
+<div style="flex:1;min-width:0;display:flex;align-items:baseline;gap:7px;border-left:1px solid var(--color-divider);padding-left:12px"><span style="font:600 38px/1 var(--font-heading);font-variant-numeric:tabular-nums;opacity:{{ gfcJogOp }}">{{ gfcJogValue }}</span><span style="font-size:16px;color:var(--color-neutral-600);white-space:nowrap">{{ gfcJogUnit }}</span></div>
+<button onClick="{{ noop }}" style="height:53px;width:140px;padding:0 12px;border:1px solid var(--color-divider);border-radius:2px;background:transparent;cursor:pointer;display:flex;flex-direction:column;align-items:flex-start;justify-content:center;gap:3px"><span style="font:600 14px/1 var(--font-heading);letter-spacing:.1em;color:var(--color-neutral-600)">DEVICE</span><span style="font:600 20px/1 var(--font-heading)">장치 변경</span></button>
+</div>
+</div>
+</div>
+
+<div style="display:flex;flex-direction:column;gap:10px">
+<div style="display:flex;align-items:baseline;gap:10px"><span style="font:600 21px/1 var(--font-heading);letter-spacing:.1em;padding:4px 7px;background:var(--color-accent-900);color:#f2f2f3">03</span><span style="font:600 18px/1 var(--font-heading);letter-spacing:.04em;text-transform:uppercase">AOS · Gas Data 측정 Mode</span></div>
+<div class="blueprint" style="width:800px;height:480px;display:flex;flex-direction:column;overflow:hidden;background:var(--color-bg);box-shadow:var(--shadow-md)">
+<i class="corner tl"></i><i class="corner tr"></i><i class="corner bl"></i><i class="corner br"></i>
+
+<div style="height:44px;flex:none;display:flex;align-items:center;justify-content:space-between;padding:0 14px;background:{{ barBg }};color:{{ barFg }}">
+<div style="display:flex;align-items:baseline;gap:12px"><span style="font:700 25px/1 var(--font-heading);letter-spacing:.08em">GTS CONSOLE</span><span style="font:600 18px/1 var(--font-heading);letter-spacing:.1em;padding:3px 7px;background:rgba(242,242,243,.16);border:1px solid rgba(242,242,243,.35)">MyID : {{ myIdText }}</span><span style="font-size:14px;opacity:.7;letter-spacing:.08em">AOS · GAS DATA / 가스 측정</span></div>
+<div style="display:flex;align-items:center;gap:14px;font-size:15px">
+<span style="font:600 19px/1 var(--font-heading);letter-spacing:.08em;padding:4px 8px;border:1px solid rgba(242,242,243,.45)">AOS · ID 07</span>
+<span style="display:flex;align-items:center;gap:6px"><span style="width:8px;height:8px;background:#9fe0b4;display:block"></span>LINK</span>
+<span style="opacity:.6">218.147.152.41:5502</span>
+</div>
+</div>
+
+<div style="flex:1;min-height:0;display:flex;flex-direction:column;padding:12px;gap:10px">
+<div style="font:600 19px/1 var(--font-heading);letter-spacing:.1em;text-transform:uppercase;color:var(--color-neutral-600)">Data Type / 측정 종류 · 4종</div>
+<div style="display:flex;gap:8px;flex:none">
+<sc-for list="{{ aosTypes }}" as="a" hint-placeholder-count="4">
+<div onClick="{{ a.select }}" style="flex:1;height:100px;padding:10px 12px;cursor:pointer;display:flex;flex-direction:column;justify-content:space-between;border:1px solid var(--color-divider);background:{{ a.bg }};border-width:{{ a.bw }};border-color:{{ a.bc }}">
+<div style="font:600 28px/1 var(--font-heading);letter-spacing:.02em;color:{{ a.fg }}">{{ a.name }}</div>
+<div><div style="font-size:15px;color:var(--color-neutral-700)">{{ a.dur }}</div><div style="font-size:14px;color:var(--color-neutral-600)">{{ a.note }}</div></div>
+</div>
+</sc-for>
+</div>
+<div style="flex:1;min-height:0;display:flex;gap:10px">
+<div class="blueprint" style="flex:1;min-width:0;padding:12px 14px;display:flex;flex-direction:column;justify-content:space-between">
+<i class="corner tl"></i><i class="corner tr"></i><i class="corner bl"></i><i class="corner br"></i>
+<div style="display:flex;align-items:flex-end;justify-content:space-between">
+<div><div style="font:600 19px/1 var(--font-heading);letter-spacing:.1em;text-transform:uppercase;color:var(--color-neutral-600);margin-bottom:6px">Elapsed / 경과</div><div style="font:600 50px/1 var(--font-heading);font-variant-numeric:tabular-nums">{{ aosElapsed }}</div></div>
+<div style="text-align:right"><div style="font:600 19px/1 var(--font-heading);letter-spacing:.1em;text-transform:uppercase;color:var(--color-neutral-600);margin-bottom:6px">Remaining / 남은 시간</div><div style="font:600 34px/1 var(--font-heading);font-variant-numeric:tabular-nums;color:var(--color-accent-700)">{{ aosRemain }}</div></div>
+</div>
+<div>
+<div style="height:10px;background:var(--color-neutral-300)"><div style="height:10px;background:var(--color-accent);width:{{ aosProgress }}"></div></div>
+<div style="display:flex;justify-content:space-between;font-size:14px;color:var(--color-neutral-600);margin-top:6px"><span>{{ aosSamples }}</span><span>측정 종료 시 자동 Stop / auto-stop on completion</span></div>
+</div>
+</div>
+<button onClick="{{ aosToggle }}" style="width:196px;flex:none;border:0;border-radius:2px;cursor:pointer;font:600 34px/1 var(--font-heading);letter-spacing:.08em;background:{{ aosBtnBg }};color:{{ aosBtnFg }}">{{ aosBtnLabel }}</button>
+</div>
+</div>
+
+<div style="height:64px;flex:none;display:flex;align-items:center;gap:8px;padding:0 10px;border-top:1px solid var(--color-divider);background:var(--color-neutral-100)">
+<div style="width:116px;flex:none"><div style="font:600 19px/1 var(--font-heading);letter-spacing:.1em;color:var(--color-neutral-600);text-transform:uppercase">Jog target</div><div style="font:600 22px/1.2 var(--font-heading)">DATA TYPE</div></div>
+<div style="flex:1;min-width:0;display:flex;align-items:baseline;gap:7px;border-left:1px solid var(--color-divider);padding-left:12px"><span style="font:600 38px/1 var(--font-heading)">{{ aosSelName }}</span><span style="font-size:16px;color:var(--color-neutral-600)">{{ aosSelIdx }} / 4</span></div>
+<button onClick="{{ noop }}" style="height:53px;width:140px;padding:0 12px;border:1px solid var(--color-divider);border-radius:2px;background:transparent;cursor:pointer;display:flex;flex-direction:column;align-items:flex-start;justify-content:center;gap:3px"><span style="font:600 14px/1 var(--font-heading);letter-spacing:.1em;color:var(--color-neutral-600)">DEVICE</span><span style="font:600 20px/1 var(--font-heading)">장치 변경</span></button>
+<button onClick="{{ noop }}" style="height:53px;width:140px;padding:0 12px;border:1px solid var(--color-divider);border-radius:2px;background:transparent;cursor:pointer;display:flex;flex-direction:column;align-items:flex-start;justify-content:center;gap:3px"><span style="font:600 14px/1 var(--font-heading);letter-spacing:.1em;color:var(--color-neutral-600)">GO TO</span><span style="font:600 20px/1 var(--font-heading)">MANUAL ▸</span></button>
+</div>
+</div>
+</div>
+
+<div style="display:flex;flex-direction:column;gap:10px">
+<div style="display:flex;align-items:baseline;gap:10px"><span style="font:600 21px/1 var(--font-heading);letter-spacing:.1em;padding:4px 7px;background:var(--color-accent-900);color:#f2f2f3">04</span><span style="font:600 18px/1 var(--font-heading);letter-spacing:.04em;text-transform:uppercase">AOS · Manual Mode</span><span style="font-size:15px;color:var(--color-neutral-600)">타일 터치 = jog 대상 선택</span></div>
+<div class="blueprint" style="width:800px;height:480px;display:flex;flex-direction:column;overflow:hidden;background:var(--color-bg);box-shadow:var(--shadow-md)">
+<i class="corner tl"></i><i class="corner tr"></i><i class="corner bl"></i><i class="corner br"></i>
+
+<div style="height:44px;flex:none;display:flex;align-items:center;justify-content:space-between;padding:0 14px;background:{{ barBg }};color:{{ barFg }}">
+<div style="display:flex;align-items:baseline;gap:12px"><span style="font:700 25px/1 var(--font-heading);letter-spacing:.08em">GTS CONSOLE</span><span style="font:600 18px/1 var(--font-heading);letter-spacing:.1em;padding:3px 7px;background:rgba(242,242,243,.16);border:1px solid rgba(242,242,243,.35)">MyID : {{ myIdText }}</span><span style="font-size:14px;opacity:.7;letter-spacing:.08em">AOS · MANUAL / 수동 제어</span></div>
+<div style="display:flex;align-items:center;gap:14px;font-size:15px">
+<span style="font:600 19px/1 var(--font-heading);letter-spacing:.08em;padding:4px 8px;border:1px solid rgba(242,242,243,.45)">AOS · ID 07</span>
+<span style="display:flex;align-items:center;gap:6px"><span style="width:8px;height:8px;background:#9fe0b4;display:block"></span>LINK</span>
+<span style="opacity:.6">218.147.152.41:5502</span>
+</div>
+</div>
+
+<div style="flex:1;min-height:0;display:flex;flex-direction:column;padding:12px;gap:8px">
+<div style="flex:1;min-height:0;display:grid;grid-template-columns:repeat(3,1fr);grid-template-rows:1fr 1fr;gap:8px">
+<sc-for list="{{ manTiles }}" as="m" hint-placeholder-count="6">
+<div onClick="{{ m.select }}" style="padding:9px 11px;cursor:pointer;display:flex;flex-direction:column;justify-content:space-between;border:1px solid var(--color-divider);background:{{ m.bg }};border-width:{{ m.bw }};border-color:{{ m.bc }};opacity:{{ m.op }}">
+<div style="display:flex;align-items:baseline;justify-content:space-between">
+<span style="font:600 21px/1 var(--font-heading);letter-spacing:.04em">{{ m.label }}</span>
+<span style="font-size:16px;color:var(--color-neutral-600);font-variant-numeric:tabular-nums">{{ m.range }}</span>
+</div>
+<div style="display:flex;align-items:baseline;gap:5px"><span style="font:600 40px/1 var(--font-heading);font-variant-numeric:tabular-nums">{{ m.value }}</span><span style="font-size:16px;color:var(--color-neutral-700)">{{ m.unit }}</span></div>
+<div style="display:flex;align-items:center;justify-content:space-between">
+<span style="font-size:16px;color:var(--color-neutral-600)">{{ m.ko }}</span>
+<span style="font:600 19px/1 var(--font-heading);letter-spacing:.1em;padding:4px 6px;background:{{ m.badgeBg }};color:{{ m.badgeFg }}">STEP {{ m.step }}</span>
+</div>
+</div>
+</sc-for>
+</div>
+<div style="flex:none;display:flex;align-items:center;gap:8px;height:50px">
+<button onClick="{{ lfToggle }}" style="width:230px;height:50px;border-radius:2px;cursor:pointer;display:flex;flex-direction:column;align-items:flex-start;justify-content:center;padding:0 12px;gap:2px;border:1px solid var(--color-divider);background:{{ lfBg }};color:{{ lfFg }};border-width:{{ lfBw }};border-color:{{ lfBc }}"><span style="font:600 18px/1 var(--font-heading);letter-spacing:.1em;opacity:.75">LF_MODE / 저주파</span><span style="font:600 21px/1 var(--font-heading)">{{ lfLabel }}</span></button>
+<div style="flex:1;display:flex;align-items:center;height:50px;padding:0 14px;border:1px solid var(--color-divider);font-size:15px;color:var(--color-neutral-600)">LF_Mode Off 시 LF_Frq · LF_Volt 항목은 비활성화됩니다.</div>
+</div>
+</div>
+
+<div style="height:64px;flex:none;display:flex;align-items:center;gap:8px;padding:0 10px;border-top:1px solid var(--color-divider);background:var(--color-neutral-100)">
+<div style="width:116px;flex:none"><div style="font:600 19px/1 var(--font-heading);letter-spacing:.1em;color:var(--color-neutral-600);text-transform:uppercase">Jog target</div><div style="font:600 22px/1.2 var(--font-heading)">{{ manJogName }}</div></div>
+<div style="flex:1;min-width:0;display:flex;align-items:baseline;gap:7px;border-left:1px solid var(--color-divider);padding-left:12px"><span style="font:600 38px/1 var(--font-heading);font-variant-numeric:tabular-nums">{{ manJogValue }}</span><span style="font-size:16px;color:var(--color-neutral-600);white-space:nowrap">{{ manJogUnit }}</span></div>
+<button onClick="{{ noop }}" style="height:53px;width:140px;padding:0 12px;border:1px solid var(--color-divider);border-radius:2px;background:transparent;cursor:pointer;display:flex;flex-direction:column;align-items:flex-start;justify-content:center;gap:3px"><span style="font:600 14px/1 var(--font-heading);letter-spacing:.1em;color:var(--color-neutral-600)">DEVICE</span><span style="font:600 20px/1 var(--font-heading)">장치 변경</span></button>
+<button onClick="{{ noop }}" style="height:53px;width:140px;padding:0 12px;border:1px solid var(--color-divider);border-radius:2px;background:transparent;cursor:pointer;display:flex;flex-direction:column;align-items:flex-start;justify-content:center;gap:3px"><span style="font:600 14px/1 var(--font-heading);letter-spacing:.1em;color:var(--color-neutral-600)">GO TO</span><span style="font:600 20px/1 var(--font-heading)">자동측정</span></button>
+<div style="height:53px;min-width:112px;padding:0 12px;background:var(--color-accent);color:var(--color-bg);display:flex;flex-direction:column;align-items:flex-start;justify-content:center;gap:2px"><span style="font:600 18px/1 var(--font-heading);letter-spacing:.1em;opacity:.8">STEP</span><span style="font:600 19px/1 var(--font-heading)">{{ manJogStep }}</span></div>
+</div>
+</div>
+</div>
+
+<div style="display:flex;flex-direction:column;gap:10px">
+<div style="display:flex;align-items:baseline;gap:10px"><span style="font:600 21px/1 var(--font-heading);letter-spacing:.1em;padding:4px 7px;background:var(--color-accent-900);color:#f2f2f3">05</span><span style="font:600 18px/1 var(--font-heading);letter-spacing:.04em;text-transform:uppercase">WiFi 접속 List</span><span style="font-size:15px;color:var(--color-neutral-600)">연결 실패 시 PAGE 1에서 자동 전환</span></div>
+<div class="blueprint" style="width:800px;height:480px;display:flex;flex-direction:column;overflow:hidden;background:var(--color-bg);box-shadow:var(--shadow-md)">
+<i class="corner tl"></i><i class="corner tr"></i><i class="corner bl"></i><i class="corner br"></i>
+
+<div style="height:44px;flex:none;display:flex;align-items:center;justify-content:space-between;padding:0 14px;background:{{ barBg }};color:{{ barFg }}">
+<div style="display:flex;align-items:baseline;gap:12px"><span style="font:700 25px/1 var(--font-heading);letter-spacing:.08em">GTS CONSOLE</span><span style="font:600 18px/1 var(--font-heading);letter-spacing:.1em;padding:3px 7px;background:rgba(242,242,243,.16);border:1px solid rgba(242,242,243,.35)">MyID : {{ myIdText }}</span><span style="font-size:14px;opacity:.7;letter-spacing:.08em">WIFI SETUP / 무선 접속</span></div>
+<div style="display:flex;align-items:center;gap:14px;font-size:15px">
+<span style="display:flex;align-items:center;gap:6px"><span style="width:8px;height:8px;background:{{ wifiDot }};display:block"></span>{{ wifiState }}</span>
+<span style="opacity:.6">{{ wifiIp }}</span>
+</div>
+</div>
+
+<div style="flex:1;min-height:0;display:flex;gap:12px;padding:12px">
+<div style="flex:1;min-width:0;display:flex;flex-direction:column">
+<div style="display:flex;align-items:baseline;justify-content:space-between;margin-bottom:6px">
+<span style="font:600 19px/1 var(--font-heading);letter-spacing:.1em;text-transform:uppercase;color:var(--color-neutral-600)">Saved Networks / 등록 지점</span>
+<span style="font-size:14px;color:var(--color-neutral-600)">{{ wifiScanText }}</span>
+</div>
+<div style="display:flex;flex-direction:column;gap:6px">
+<sc-for list="{{ wifiNets }}" as="w" hint-placeholder-count="3">
+<div onClick="{{ w.select }}" style="height:74px;padding:0 14px;cursor:pointer;display:flex;align-items:center;justify-content:space-between;border:1px solid var(--color-divider);background:{{ w.bg }};border-width:{{ w.bw }};border-color:{{ w.bc }}">
+<div style="display:flex;flex-direction:column;gap:3px">
+<span style="font:600 26px/1 var(--font-heading);letter-spacing:.02em">{{ w.ssid }}</span>
+<span style="font-size:15px;color:var(--color-neutral-600)">{{ w.note }}</span>
+</div>
+<div style="display:flex;align-items:center;gap:14px">
+<span style="font:600 19px/1 var(--font-heading);letter-spacing:.1em;padding:5px 8px;background:{{ w.tagBg }};color:{{ w.tagFg }}">{{ w.tag }}</span>
+<span style="font:600 24px/1 var(--font-heading);font-variant-numeric:tabular-nums;width:108px;text-align:right;white-space:nowrap">{{ w.rssi }}</span>
+</div>
+</div>
+</sc-for>
+</div>
+</div>
+
+<div class="blueprint" style="width:246px;flex:none;padding:12px 14px;display:flex;flex-direction:column">
+<i class="corner tl"></i><i class="corner tr"></i><i class="corner bl"></i><i class="corner br"></i>
+<div style="font:600 19px/1 var(--font-heading);letter-spacing:.1em;text-transform:uppercase;color:var(--color-neutral-600)">Selected / 선택</div>
+<div style="font:600 28px/1.1 var(--font-heading);margin-top:8px">{{ wifiSelSsid }}</div>
+<div style="font-size:15px;color:var(--color-neutral-600);margin-top:4px">{{ wifiSelNote }}</div>
+<div style="height:1px;background:var(--color-divider);margin:12px 0"></div>
+<div style="display:flex;justify-content:space-between;font-size:16px;padding:5px 0"><span style="color:var(--color-neutral-600)">Signal</span><span style="font-variant-numeric:tabular-nums">{{ wifiSelRssi }}</span></div>
+<div style="display:flex;justify-content:space-between;font-size:16px;padding:5px 0"><span style="color:var(--color-neutral-600)">Security</span><span>{{ wifiSelSec }}</span></div>
+<div style="flex:1"></div>
+<button onClick="{{ wifiConnect }}" style="height:66px;border:0;border-radius:2px;cursor:pointer;font:600 24px/1 var(--font-heading);letter-spacing:.08em;background:{{ wifiBtnBg }};color:var(--color-bg)">{{ wifiBtnLabel }}</button>
+<div style="font-size:14px;color:var(--color-neutral-600);margin-top:6px">연결되면 PAGE 1로 자동 전환</div>
+</div>
+</div>
+
+<div style="height:64px;flex:none;display:flex;align-items:center;gap:8px;padding:0 10px;border-top:1px solid var(--color-divider);background:var(--color-neutral-100)">
+<div style="width:116px;flex:none"><div style="font:600 19px/1 var(--font-heading);letter-spacing:.1em;color:var(--color-neutral-600);text-transform:uppercase">Jog target</div><div style="font:600 22px/1.2 var(--font-heading)">NETWORK</div></div>
+<div style="flex:1;min-width:0;display:flex;align-items:baseline;gap:7px;border-left:1px solid var(--color-divider);padding-left:12px"><span style="font:600 38px/1 var(--font-heading)">{{ wifiSelSsid }}</span><span style="font-size:16px;color:var(--color-neutral-600)">{{ wifiSelIdx }}</span></div>
+<button onClick="{{ wifiRescan }}" style="height:53px;width:140px;padding:0 12px;border:1px solid var(--color-divider);border-radius:2px;background:transparent;cursor:pointer;display:flex;flex-direction:column;align-items:flex-start;justify-content:center;gap:3px"><span style="font:600 14px/1 var(--font-heading);letter-spacing:.1em;color:var(--color-neutral-600)">SCAN</span><span style="font:600 20px/1 var(--font-heading)">다시 검색</span></button>
+</div>
+</div>
+</div>
+
+</div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props="{&quot;myId&quot;:{&quot;editor&quot;:&quot;int&quot;,&quot;default&quot;:1,&quot;min&quot;:1,&quot;max&quot;:20,&quot;tsType&quot;:&quot;number&quot;,&quot;section&quot;:&quot;Console&quot;},&quot;bilingual&quot;:{&quot;editor&quot;:&quot;boolean&quot;,&quot;default&quot;:true,&quot;tsType&quot;:&quot;boolean&quot;,&quot;section&quot;:&quot;Labels&quot;},&quot;chromeSteel&quot;:{&quot;editor&quot;:&quot;boolean&quot;,&quot;default&quot;:true,&quot;tsType&quot;:&quot;boolean&quot;,&quot;section&quot;:&quot;Chrome&quot;},&quot;gfcDefaultMode&quot;:{&quot;editor&quot;:&quot;enum&quot;,&quot;options&quot;:[&quot;Manual&quot;,&quot;Auto&quot;],&quot;default&quot;:&quot;Auto&quot;,&quot;tsType&quot;:&quot;string&quot;,&quot;section&quot;:&quot;Screens&quot;}}">
+class Component extends DCLogic {
+  state = {
+    devType: 'AOS', devId: 7,
+    gfcMode: 'Auto', pumpOn: true,
+    errOpen: true,
+    gfcVals: { start: 2.5, cycle: 1.5 },
+    gfcSel: 'start', gfcRun: true,
+    aosSel: 2, aosRun: true,
+    manVals: { HV: 124.50, Frq: 415.0, Duty: 32.50, CV: -1.250, LFfrq: 120, LFvolt: 2.40 },
+    manStepIdx: { HV: 1, Frq: 1, Duty: 0, CV: 1, LFfrq: 0, LFvolt: 1 },
+    manSel: 'HV', lfOn: true, shape: 'Sine',
+    wifiSel: 0, wifiLinked: false
+  };
+
+  WIFI = [
+    { ssid: 'GTS-LAB-5G', note: '실험실 · 최근 접속 09:38', rssi: '−46 dBm', sec: 'WPA2', saved: true },
+    { ssid: 'GTS-FIELD-A', note: 'A공장 현장 · 등록됨', rssi: '−67 dBm', sec: 'WPA2', saved: true },
+    { ssid: 'GTS-FIELD-B', note: 'B공장 현장 · 등록됨', rssi: '−78 dBm', sec: 'WPA2', saved: true }
+  ];
+
+  MAN = [
+    { key: 'HV', label: 'HV', ko: '고전압', unit: 'V', min: 0, max: 200, steps: [0.01, 0.1, 1], dec: 2 },
+    { key: 'Frq', label: 'Frq', ko: '주파수', unit: 'kHz', min: 200, max: 800, steps: [0.1, 1, 10], dec: 1 },
+    { key: 'Duty', label: 'Duty', ko: '듀티', unit: '%', min: 10, max: 50, steps: [0.01, 0.1], dec: 2 },
+    { key: 'CV', label: 'CV', ko: '제어 전압', unit: 'V', min: -5, max: 5, steps: [0.001, 0.01, 0.1], dec: 3 },
+    { key: 'LFfrq', label: 'LF_Frq', ko: '저주파 주파수', unit: 'Hz', min: 50, max: 200, steps: [1], dec: 0, lf: true },
+    { key: 'LFvolt', label: 'LF_Volt', ko: '저주파 전압', unit: 'V', min: 0, max: 5, steps: [0.01, 0.1], dec: 2, lf: true }
+  ];
+
+  GFC = [
+    { key: 'start', label: 'Start · Pump On Time', ko: '시작 시 Pump On' },
+    { key: 'cycle', label: '10min Cycle · Pump On Time', ko: '10분 주기 Pump On' }
+  ];
+
+  AOS = [
+    { name: 'preTest', dur: '약 5 min', note: '연결/감도 확인' },
+    { name: '1 hour', dur: '60 min', note: '단기 측정' },
+    { name: '2 hour', dur: '120 min', note: '표준 측정' },
+    { name: '8 hour', dur: '480 min', note: 'full data' }
+  ];
+
+  clamp(v, a, b) { return Math.min(b, Math.max(a, v)); }
+  round(v, dec) { return Number(v.toFixed(dec)); }
+
+  selStyle(on) {
+    return on
+      ? { bg: 'var(--color-accent-100)', bw: '2px', bc: 'var(--color-accent)', badgeBg: 'var(--color-accent)', badgeFg: 'var(--color-bg)' }
+      : { bg: 'transparent', bw: '1px', bc: 'var(--color-divider)', badgeBg: 'var(--color-neutral-200)', badgeFg: 'var(--color-neutral-700)' };
+  }
+
+  fill(on) {
+    return on
+      ? { bg: 'var(--color-accent)', fg: 'var(--color-bg)', bw: '1px', bc: 'var(--color-accent)' }
+      : { bg: 'transparent', fg: 'var(--color-text)', bw: '1px', bc: 'var(--color-divider)' };
+  }
+
+  mmss(s) {
+    const m = Math.floor(s / 60), r = Math.floor(s % 60);
+    return String(m).padStart(2, '0') + ':' + String(r).padStart(2, '0');
+  }
+  hhmmss(s) {
+    const h = Math.floor(s / 3600);
+    return String(h).padStart(2, '0') + ':' + this.mmss(s % 3600);
+  }
+
+  renderVals() {
+    const S = this.state, P = this.props;
+    const bilingual = P.bilingual ?? true;
+    const steel = P.chromeSteel ?? true;
+    const gfcMode = S.gfcMode ?? (P.gfcDefaultMode ?? 'Auto');
+    const myId = P.myId ?? 1;
+
+    const set = (o) => this.setState(o);
+
+    // ── screen 1
+    const ids = [];
+    for (let n = 1; n <= 20; n++) {
+      const on = n === S.devId;
+      ids.push(Object.assign({ n: String(n).padStart(2, '0'), pick: () => set({ devId: n }) }, this.fill(on)));
+    }
+    const devIdText = String(S.devId).padStart(2, '0');
+    const connRows = [
+      { k: 'Target / 대상', v: S.devType + ' · ID ' + devIdText },
+      { k: 'UDP Server', v: '218.147.152.41 : 5502' },
+      { k: 'Link / 연결', v: 'ONLINE · RTT 12 ms' },
+      { k: 'Model', v: 'GTS CONSOLE ID : ' + myId },
+      { k: 'Device State / 상태', v: S.devType === 'AOS' ? 'IDLE · HV OFF' : 'IDLE · PUMP OFF' },
+      { k: 'Last Reply / 최종 응답', v: '09:41:22' }
+    ];
+
+    // ── screen 2
+    const gfcIsAuto = gfcMode === 'Auto';
+    const pOn = S.pumpOn;
+    const pump = {
+      state: pOn ? 'ON' : 'OFF',
+      runtime: '04 m 12 s',
+      bw: pOn ? '2px' : '1px', bc: pOn ? 'var(--color-accent)' : 'var(--color-divider)',
+      tagBg: pOn ? 'var(--color-accent)' : 'var(--color-neutral-200)',
+      tagFg: pOn ? 'var(--color-bg)' : 'var(--color-neutral-700)',
+      btnBg: pOn ? 'var(--color-accent-900)' : 'var(--color-accent)',
+      btnLabel: pOn ? 'TURN OFF' : 'TURN ON',
+      bigFg: pOn ? 'var(--color-accent)' : 'var(--color-neutral-600)',
+      toggle: () => set({ pumpOn: !S.pumpOn })
+    };
+    const gfcTiles = this.GFC.map((f) => {
+      const on = f.key === S.gfcSel;
+      return Object.assign({
+        label: bilingual ? f.label + ' / ' + f.ko : f.label,
+        value: S.gfcVals[f.key].toFixed(1),
+        op: gfcIsAuto ? '1' : '0.4',
+        select: () => { if (gfcIsAuto) set({ gfcSel: f.key }); }
+      }, this.selStyle(on && gfcIsAuto));
+    });
+    const gfcCfg = this.GFC.find((f) => f.key === S.gfcSel);
+    const gfcAdj = (d) => set({ gfcVals: Object.assign({}, S.gfcVals, { [S.gfcSel]: this.round(this.clamp(S.gfcVals[S.gfcSel] + d * 0.1, 0.1, 60), 1) }) });
+
+    // ── screen 3
+    const aos = this.AOS[S.aosSel];
+    const total = [300, 3600, 7200, 28800][S.aosSel];
+    const elapsed = S.aosRun ? Math.round(total * 0.62) : 0;
+    const aosTypes = this.AOS.map((t, i) => {
+      const on = i === S.aosSel;
+      const st = this.selStyle(on);
+      return { name: t.name, dur: t.dur, note: t.note, bg: st.bg, bw: st.bw, bc: st.bc, fg: on ? 'var(--color-accent-900)' : 'var(--color-text)', select: () => set({ aosSel: i }) };
+    });
+
+    // ── screen 4
+    const manTiles = this.MAN.map((f) => {
+      const on = f.key === S.manSel;
+      const dim = f.lf && !S.lfOn;
+      return Object.assign({
+        label: f.label, ko: bilingual ? f.ko : '',
+        unit: f.unit,
+        range: f.min + ' – ' + f.max + ' ' + f.unit,
+        value: S.manVals[f.key].toFixed(f.dec),
+        step: f.steps[S.manStepIdx[f.key]] + ' ' + f.unit,
+        op: dim ? '0.45' : '1',
+        select: () => { if (!dim) set({ manSel: f.key }); }
+      }, this.selStyle(on && !dim));
+    });
+    const manCfg = this.MAN.find((f) => f.key === S.manSel);
+    const manStepVal = manCfg.steps[S.manStepIdx[manCfg.key]];
+    const manAdj = (d) => set({ manVals: Object.assign({}, S.manVals, { [manCfg.key]: this.round(this.clamp(S.manVals[manCfg.key] + d * manStepVal, manCfg.min, manCfg.max), manCfg.dec) }) });
+    return {
+      noop: () => {},
+      barBg: steel ? 'var(--color-accent-900)' : 'var(--color-neutral-900)',
+      barFg: '#f2f2f3',
+      devType: S.devType, devIdText,
+      linkDot: '#9fe0b4', linkText: 'LINK',
+      ids, connRows,
+      aosBg: this.fill(S.devType === 'AOS').bg, aosFg: this.fill(S.devType === 'AOS').fg,
+      aosBw: S.devType === 'AOS' ? '2px' : '1px', aosBc: S.devType === 'AOS' ? 'var(--color-accent)' : 'var(--color-divider)',
+      gfcBg: this.fill(S.devType === 'GFC').bg, gfcFg: this.fill(S.devType === 'GFC').fg,
+      gfcBw: S.devType === 'GFC' ? '2px' : '1px', gfcBc: S.devType === 'GFC' ? 'var(--color-accent)' : 'var(--color-divider)',
+      pickAOS: () => set({ devType: 'AOS' }), pickGFC: () => set({ devType: 'GFC' }),
+      retest: () => {}, enter: () => {},
+      idUp: () => set({ devId: this.clamp(S.devId + 1, 1, 20) }),
+      idDown: () => set({ devId: this.clamp(S.devId - 1, 1, 20) }),
+
+      gfcIsManual: !gfcIsAuto, gfcIsAuto,
+      gm: gfcIsAuto ? { bg: 'transparent', fg: 'var(--color-text)' } : { bg: 'var(--color-accent)', fg: 'var(--color-bg)' },
+      ga: gfcIsAuto ? { bg: 'var(--color-accent)', fg: 'var(--color-bg)' } : { bg: 'transparent', fg: 'var(--color-text)' },
+      gfcManual: () => set({ gfcMode: 'Manual' }), gfcAuto: () => set({ gfcMode: 'Auto' }),
+      pump, gfcTiles, myIdText: String(myId).padStart(2, '0'),
+      gfcSideLabel: gfcIsAuto ? 'Cycle / 10분 주기' : 'Pump State / 펌프 상태',
+      gfcSideFg: gfcIsAuto ? 'var(--color-text)' : (S.pumpOn ? 'var(--color-accent)' : 'var(--color-neutral-600)'),
+      gfcCountdown: gfcIsAuto ? (S.gfcRun ? '07:12' : '--:--') : (S.pumpOn ? 'ON' : 'OFF'),
+      gfcRunText: gfcIsAuto ? ('다음 분사까지 · ' + (S.gfcRun ? 'AUTO RUNNING' : 'STOPPED')) : 'Pump1 · Pump2 동시 구동',
+      gfcProgress: gfcIsAuto ? (S.gfcRun ? '28%' : '0%') : (S.pumpOn ? '100%' : '0%'),
+      gfcRunBg: (gfcIsAuto ? S.gfcRun : S.pumpOn) ? 'var(--color-accent-900)' : 'var(--color-accent)',
+      gfcRunFg: 'var(--color-bg)',
+      gfcRunLabel: gfcIsAuto ? (S.gfcRun ? 'AUTO STOP' : 'AUTO START') : (S.pumpOn ? 'PUMP OFF' : 'PUMP ON'),
+      gfcRunNote: gfcIsAuto ? 'Stop 시 Pump1, Pump2 모두 Off' : 'Manual Mode · Start / 10분 주기 설정 비활성',
+      gfcToggleRun: () => set(gfcIsAuto ? { gfcRun: !S.gfcRun } : { pumpOn: !S.pumpOn }),
+      gfcJogName: gfcIsAuto ? (gfcCfg.label.split(' · ')[1] || gfcCfg.label) : '—',
+      gfcJogValue: gfcIsAuto ? S.gfcVals[S.gfcSel].toFixed(1) : '—',
+      gfcJogUnit: gfcIsAuto ? 'sec  (0.1 – 60)' : 'Manual Mode · 터치로만 제어',
+      gfcJogStep: gfcIsAuto ? '0.1 sec' : '—',
+      gfcJogOp: gfcIsAuto ? '1' : '0.4',
+      gfcStep: () => {},
+      gfcUp: () => { if (gfcIsAuto) gfcAdj(1); },
+      gfcDown: () => { if (gfcIsAuto) gfcAdj(-1); },
+
+      aosTypes,
+      aosElapsed: this.hhmmss(elapsed), aosRemain: this.hhmmss(total - elapsed),
+      aosProgress: S.aosRun ? '62%' : '0%',
+      aosSamples: S.aosRun ? 'samples 11,240 / 18,000 · 1 Hz' : 'samples 0 / 18,000 · 1 Hz',
+      aosBtnBg: S.aosRun ? 'var(--color-accent-900)' : 'var(--color-accent)',
+      aosBtnFg: 'var(--color-bg)',
+      aosBtnLabel: S.aosRun ? 'STOP' : 'START',
+      aosToggle: () => set({ aosRun: !S.aosRun }),
+      aosSelName: aos.name, aosSelIdx: String(S.aosSel + 1),
+      aosPrev: () => set({ aosSel: this.clamp(S.aosSel - 1, 0, 3) }),
+      aosNext: () => set({ aosSel: this.clamp(S.aosSel + 1, 0, 3) }),
+
+      manTiles,
+      lfLabel: S.lfOn ? 'ON' : 'OFF',
+      lfBg: S.lfOn ? 'var(--color-accent)' : 'transparent',
+      lfFg: S.lfOn ? 'var(--color-bg)' : 'var(--color-text)',
+      lfBw: S.lfOn ? '2px' : '1px',
+      lfBc: S.lfOn ? 'var(--color-accent)' : 'var(--color-divider)',
+      lfToggle: () => set({ lfOn: !S.lfOn, manSel: (!S.lfOn === false && (S.manSel === 'LFfrq' || S.manSel === 'LFvolt')) ? 'HV' : S.manSel }),
+      manJogName: manCfg.label,
+      manJogValue: S.manVals[manCfg.key].toFixed(manCfg.dec),
+      manJogUnit: manCfg.unit + '  (' + manCfg.min + ' – ' + manCfg.max + ')',
+      manJogStep: manStepVal + ' ' + manCfg.unit,
+      manStep: () => set({ manStepIdx: Object.assign({}, S.manStepIdx, { [manCfg.key]: (S.manStepIdx[manCfg.key] + 1) % manCfg.steps.length }) }),
+      manUp: () => manAdj(1), manDown: () => manAdj(-1),
+
+      errOpen: S.errOpen,
+      errRows: [
+        { k: 'Target / 대상', v: 'GFC · ID 12' },
+        { k: 'UDP Server', v: '218.147.152.41 : 5502' },
+        { k: 'Sent / 송신', v: 'CONN_REQ ×3 (1.0 s 간격)' },
+        { k: 'Reply / 응답', v: 'none — timeout 3.0 s' },
+        { k: 'Last Seen / 최종 통신', v: '09:12:04 (28분 전)' }
+      ],
+      errClose: () => set({ errOpen: false }),
+      errRetry: () => set({ errOpen: false }),
+
+      // ── screen 5 · WiFi
+      wifiNets: this.WIFI.map((w, i) => {
+        const on = i === S.wifiSel;
+        const linked = on && S.wifiLinked;
+        const st = this.selStyle(on);
+        return {
+          ssid: w.ssid, note: w.note, rssi: w.rssi,
+          bg: st.bg, bw: st.bw, bc: st.bc,
+          tag: linked ? 'CONNECTED' : w.sec,
+          tagBg: linked ? 'var(--color-accent)' : 'var(--color-neutral-200)',
+          tagFg: linked ? 'var(--color-bg)' : 'var(--color-neutral-700)',
+          select: () => set({ wifiSel: i, wifiLinked: false })
+        };
+      }),
+      wifiDot: S.wifiLinked ? '#9fe0b4' : '#e0a39f',
+      wifiState: S.wifiLinked ? 'WIFI OK' : 'NO WIFI',
+      wifiIp: S.wifiLinked ? '192.168.0.41' : 'IP 미할당',
+      wifiScanText: '3 found · 09:41:02',
+      wifiSelSsid: this.WIFI[S.wifiSel].ssid,
+      wifiSelNote: this.WIFI[S.wifiSel].note,
+      wifiSelRssi: this.WIFI[S.wifiSel].rssi,
+      wifiSelSec: this.WIFI[S.wifiSel].sec,
+      wifiSelPw: '저장됨 / saved',
+      wifiSelIdx: (S.wifiSel + 1) + ' / ' + this.WIFI.length,
+      wifiBtnLabel: S.wifiLinked ? 'DISCONNECT' : 'CONNECT',
+      wifiBtnBg: S.wifiLinked ? 'var(--color-accent-900)' : 'var(--color-accent)',
+      wifiConnect: () => set({ wifiLinked: !S.wifiLinked }),
+      wifiRescan: () => {}
+    };
+  }
+}
+</script>
+</body>
+</html>

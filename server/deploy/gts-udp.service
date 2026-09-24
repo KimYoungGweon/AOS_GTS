@@ -1,0 +1,19 @@
+# /etc/systemd/system/gts-udp.service
+# 서비스 이름은 기존 그대로(gts-udp) 두고 실행 파일만 gts_server.py 로 바꾼다.
+# → gts-log / gts-restart / gts-push / sudoers(gts-nopasswd) 가 그대로 동작한다.
+# 예전 UDP 전용으로 돌리려면 ExecStart 의 gts_server.py 를 udp_server.py 로.
+[Unit]
+Description=GTS Server (UDP 중계 + DB + Web API :8081)
+After=network.target postgresql.service
+Wants=postgresql.service
+
+[Service]
+Type=simple
+User=gts
+WorkingDirectory=/home/gts/gts_udp_server
+ExecStart=/home/gts/gts_udp_server/venv/bin/python -u /home/gts/gts_udp_server/gts_server.py
+Restart=always
+RestartSec=3
+
+[Install]
+WantedBy=multi-user.target

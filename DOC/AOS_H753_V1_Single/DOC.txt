@@ -1,0 +1,195 @@
+2025.06.05 FAIMs Project 2nd Version
+
+MAin MCU : STM32H753
+
+1. Timer (TIM2(1msec), TIM3(10msec) ->ok
+2. Delay_us -> ok
+3. AD7739 - ok : 3ch all test good!
+4. LTC2602 - ok : CV Ok -> Ref. Value 수정요망.  출력 Level이 맞지 않음. reCalibration 필
+5. EEPROM(AT25256) - ok
+6. CAL_CTL(CV, HV DAC, HV VS, HV IS, Frq Cal)
+7. PC UART
+8. LCD - 화면 구성 (기본 code ok)
+9. JOG and Button(ok)
+10. Internal ADC - DMA Average
+11. 기타 Process 
+
+-----------------------
+2025.06.06
+1. ADC - 3ch ok(AD7739)
+2. ADC - Display
+3. Jog Display and Set
+4. DAC Set
+5. Button Ok
+6. Header folder 생성 
+----------------------
+2025.06.07
+1. StartPulse 기능(10msec) : good Result : FRQ Change, CV Chagne, HV SET
+2. CAL Code 정리 : Default, EEPROM Write, EEPROM Read
+3. FRQ Cal. Code Test OK ; 480000 Set -> Real 값을 480000(Hz 단위로 저장) 
+4. DMA ADC 성공 : 설정에 문제가 있었음. 잘 정리해 놓을 것. 현재설정, -> ~1.2 msec(1000 buffer를 채우는 시간)
+	test1:
+	ADC Master CLOCK -> 20MHz
+	Clock Div-> 1
+	Sampling Time -> 32.5Cycles
+    -------------------------------> 
+    ~ 615kHz sampling Time -> *1000 -> 1.62us*1000 = 1.62msec(Good Result)
+
+   ------------------------------
+	test2:
+	ADC CLOCK : 32MHz
+	DIV = 1
+	32.5Cycle =   ~1MHz = 1.2msec 
+
+추가사항 
+-------------------------
+1. Calibration Save and Read UART_PC Code : ok
+2. FRQ Cal. Code 완성 : ok
+3. DMA ADC Test -> Working, Sampling Speed, ETC : OK. 성공함....
+4. Current Detection Time check
+
+//////////
+F/W Check
+1. RS232 PC : ok
+2. LCD OK
+3. PWM Output : OK (Calibration OK)
+4. Jog Test OK
+6. CV Test : CAL OK
+7. HV Control (HV Set CAL) : OK
+5. ADC TEst 
+	- FAN Calibration : OK
+	- HV VS / HV IS : 
+6. 기타 
+
+
+
+----------------------------------- 
+Calibration
+Display Mode 0/1(ADC View)
+
+2025.06.14(SAT)
+1. Cal_Mode -> LCD adc value와 Real Value를 선택적으로 볼있음(START Button 3초이상 누르면 전환)
+2. HV Vs, Is Cal 완료
+3. 
+
+
+2025.06.20(FRI)
+1. Wave_Control_Update
+	void Wave_Frq_and_Duty_Update()  :
+    주파수 변경에 큰 변동없이 잘 동작함. -> Good Result
+-----------------------------------    
+2025.06.21(SAT)
+1. D_Scan 구조체 작업
+2. Smart Delay
+	
+	
+2025.07.11(FRI) New Board
+1. Input 24V
+2. Signal : 추가
+3. IS -> ADC(7739 3ch)
+4. 120V Bias / Positive or Negative Select 2Bit -> 4Bit 
+
+
+---------------------------------------------------------------
+2025.07.31 V1.5   
+1. SPI12  추가 -> Low FRQ Module Control(SPI2 DMA?) : 관련 IO 변 : DMA는 나중에 TIM4 호출을 하면 Data 전
+	SPI 동작오류. MISO, MOSI 채널 변경필요함;
+	현재 DIO 방식을 25us 
+	따라서 Frq = 300Hz 까지는 정상동작. 그 이상의 경우에는 100 Sampling-> 80으로 하면 500까지 가능할것 같음.
+	Good Result	
+
+2. RED/GREEN/BUZZER > Port 변경 
+3. AD9850 추가 -> 
+	RESET Port가 없어서 PD12 Jumper 필요함. : Good Result
+	
+	
+------------------------
+2025.08.19V1.5.1
+LF(Isolate LTC2602) and HF(AD9850)를 개별보드에 설계하고 UART통신을 통하여 제어
+
+
+
+------------------------
+2025.09.03  V1.5.2
+1. FAN Control -> ADC Ony 에서 MCP4161 5kOhm 추가
+2. HF_LF Modulator 에 IO 2 ch Sync 하여 제어한다.
+3. 기타
+
+
+
+------------------------
+2025-10-23
+1. UART FAN CTL 추가 
+2. HV_RF -> HV 로 LCD 화면 표시 수정 
+
+
+------------------
+2025-10-24 얕은물 찾기. surface function 기능 추가
+1. Find Shallow water 기능 추가...
+	- Parmeter 
+		1. LF Volt, 
+		2.  CV
+		3. Duty
+	- Shallow define ,  currnet Min V - Max V Range
+	
+	
+	
+---------------------
+2025-11-14
+UART Error 수정기능 수정
+
+1. sec 마다 오류 확인후 수정 기능
+2. 
+
+--------------------------
+2025-11-22 V1.6.1
+
+*** UART 통신대신에 직접 제어하여 Latency를 줄인다.
+LF Control  - SPI
+HF Control - IO 
+
+-----------------
+2025-12-24 V1.6.1
+LF/HF 선택적 사용. 모두 SPI사용.....
+기초연용으로 장비구성 Display 변경
+
+
+2026-01-05
+LF 파형에서 LAMP,삼각파 파형이 1/2 나오는 것을 수정함.....
+
+
+2026-01-29
+1. Shallow Find 기능에서 초기 LF 값을 찾는 함수를 사용하지 않음.
+2. Shallow Find  하강과 상승 모두 사용가능-> 동작확인 필
+
+
+
+
+V1.7.0 
+V1.6.x 와 차이점.
+V1.6.x 
+	LF 동작을 LTC2602 SPI1으로 동작시킴 
+	AD7739 Read : HV_VS, IS, FAN_VS, HV_BIAS
+	
+V1.7.x 
+	DAC1을 GPIO A4에서 출력을 냄. x2 Buffer 필요, DAC 해상도가 12Bit(4096) 그러나 동작 빠르고 회로가 간편함.
+	AD7739 Read : HV_VS, FAN_VS  (HV_IS, HV Bias -> 필요없음)
+
+	Scan Start Checksum
+	
+	
+2026.02.17
+-HV 30V Step으로 이동 : 100msec delay
+
+
+
+2026.03.24
+1. Current -> Positive  and Negative 모두 측
+
+
+
+
+-----------------------
+2026-04-30 TWIN System
+1. Bias OnOf - Relay : off로 해보 OK
+2. AD7739 추가..

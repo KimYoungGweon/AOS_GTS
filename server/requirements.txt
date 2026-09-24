@@ -1,0 +1,7 @@
+# GTS 서버 (gts_server.py) — venv 에 설치:  venv/bin/pip install -r requirements.txt
+fastapi>=0.110
+uvicorn>=0.29
+websockets>=12        # /ws/live (웹 실시간). 없으면 uvicorn 이 WebSocket 을 거부한다
+asyncpg>=0.29
+psycopg[binary]>=3.1
+numpy>=1.24

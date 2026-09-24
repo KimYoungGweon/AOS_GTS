@@ -1,0 +1,158 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<ScratchFile FileVersion="3.0">
+  <FileVersion>3.0</FileVersion>
+  <Workspace>
+    <WorkspaceType>Single-project</WorkspaceType>
+    <WorkspacePath>/Volumes/EXT_HDD/Work/Git_Repository/FAIMs_Project/FAIMs_STM32IDE_WorkSpace/AOS_H753_V1_Single/</WorkspacePath>
+    <underRoot>true</underRoot>
+    <TrustZone>0</TrustZone>
+    <HAL_Driver>/Users/vdskim/STM32Cube/Repository//STM32Cube_FW_H7_V1.12.1</HAL_Driver>
+    <CMSIS>Drivers/CMSIS</CMSIS>
+    <Toolchain>STM32CubeIDE</Toolchain>
+    <IocFile>AOS_H753_V1_Single.ioc</IocFile>
+    <Project>
+              
+      <ProjectName>AOS_H753_V1_Single</ProjectName>
+           
+      <ProjectNature>C</ProjectNature>
+       
+      <Secure/>
+            
+      <filestoremove>                           </filestoremove>
+      <sourceEntriesToRemove>
+            
+        <sourceEntry/>
+      </sourceEntriesToRemove>
+          
+      <configs>
+        <config>
+              
+          <name>AOS_H753_V1_Single</name>
+          	 
+          <mainSourceRepo>Core</mainSourceRepo>
+             
+          <sourceStructure>Advanced</sourceStructure>
+           
+          <device>STM32H753VITx</device>
+          		     
+          <cpucore>ARM Cortex-M7</cpucore>
+                  
+          <fpu>DP</fpu>
+                
+          <memories>
+                       
+            <memory access="xrw" name="DTCMRAM" size="131072" start="0x20000000"/>
+                    
+            <memory access="xrw" name="RAM" size="524288" start="0x24000000"/>
+                    
+            <memory access="xrw" name="RAM_D2" size="294912" start="0x30000000"/>
+                    
+            <memory access="xrw" name="RAM_D3" size="65536" start="0x38000000"/>
+                    
+            <memory access="xrw" name="ITCMRAM" size="65536" start="0x00000000"/>
+                    
+            <memory access="rx" name="FLASH" size="2097152" start="0x8000000"/>
+                
+          </memories>
+              
+          <startup>/Users/vdskim/STM32Cube/Repository/STM32Cube_FW_H7_V1.12.1/Drivers/CMSIS/Device\ST\STM32H7xx\Source\Templates\gcc\startup_stm32h753xx.s</startup>
+                
+          <LinkSettings>
+            	
+            <LinkAdditionalLibs>	</LinkAdditionalLibs>
+          </LinkSettings>
+              
+          <heapSize>0x800</heapSize>
+              
+          <stackSize>0x800</stackSize>
+                  
+          <cpuclock>240</cpuclock>
+                  
+          <board>custom</board>
+              
+          <optimization/>
+              
+          <Aincludes>        </Aincludes>
+              
+          <Adefines>        </Adefines>
+                
+          <Cdefines>
+                    
+            <define>USE_PWR_LDO_SUPPLY</define>
+                    
+            <define>USE_HAL_DRIVER</define>
+                    
+            <define>STM32H753xx</define>
+                    
+          </Cdefines>
+              
+          <Ldefines>        </Ldefines>
+                  
+          <Cincludes>
+            		        
+            <include>Core/Inc</include>
+                    
+            <include>Drivers/STM32H7xx_HAL_Driver/Inc</include>
+                    
+            <include>Drivers/STM32H7xx_HAL_Driver/Inc/Legacy</include>
+                    
+            <include>Drivers/CMSIS/Device/ST/STM32H7xx/Include</include>
+                    
+            <include>Drivers/CMSIS/Include</include>
+                    
+          </Cincludes>
+              
+          <definestoremove>
+                    
+            <Adefines>            </Adefines>
+                    
+            <Cdefines>
+                                  
+              <define>USE_FULL_LL_DRIVER</define>
+                                  
+              <define>USE_FULL_ASSERT=1U</define>
+                          
+            </Cdefines>
+                     
+            <Ldefines>            </Ldefines>
+                     
+          </definestoremove>
+              
+          <inctoremove>
+                    
+            <Aincludes>
+                          
+              <include/>
+                          
+            </Aincludes>
+                    
+            <Cincludes>            </Cincludes>
+                    
+          </inctoremove>
+                 
+        </config>
+                
+      </configs>
+       
+      <copyAsReference>false</copyAsReference>
+               
+      <sourceEntries>
+                    
+        <sourceEntry>
+                      
+          <name>Core</name>
+                      
+        </sourceEntry>
+                            
+        <sourceEntry>
+                      
+          <name>Drivers</name>
+                  
+        </sourceEntry>
+        	          
+      </sourceEntries>
+      <Groups>    </Groups>
+       
+    </Project>
+  </Workspace>
+</ScratchFile>

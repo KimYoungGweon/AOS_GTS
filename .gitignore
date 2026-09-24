@@ -1,0 +1,80 @@
+# ══════════════════════════════════════════════════════════════════
+#  AOS_GTS .gitignore
+#
+#  원칙 — "다시 만들 수 있는 것"과 "비밀"은 넣지 않는다.
+# ══════════════════════════════════════════════════════════════════
+
+# ── 비밀 ★ ────────────────────────────────────────────────────────
+# Wi-Fi SSID/비밀번호. 새 기계에서는 .example 을 복사해 채운다.
+#   cp main/wifi_secrets.h.example main/wifi_secrets.h
+wifi_secrets.h
+!wifi_secrets.h.example
+
+# 서버 토큰·인증 관련
+.env
+*.pem
+*.key
+secrets.*
+
+# ── ESP-IDF ───────────────────────────────────────────────────────
+# 빌드 산출물. iCloud 시절 충돌의 원인이었다.
+build/
+sdkconfig.old
+sdkconfig.defaults.old
+
+# 컴포넌트 매니저가 내려받는 것 (수백 MB).
+# dependencies.lock 은 커밋해야 다른 기계에서 같은 버전이 깔린다.
+managed_components/
+!dependencies.lock
+
+# 기계마다 다른 값(시리얼 포트·IDF 경로)이 들어간다
+.vscode/settings.json
+.vscode/c_cpp_properties.json
+
+# ── STM32CubeIDE ──────────────────────────────────────────────────
+Debug/
+Release/
+*.o
+*.d
+*.su
+*.cyclo
+*.elf
+*.map
+*.list
+
+# ── Python / 서버 ─────────────────────────────────────────────────
+venv/
+.venv/
+__pycache__/
+*.py[cod]
+*.egg-info/
+
+# DB 실데이터 (스키마 .sql 은 커밋)
+*.sqlite
+*.sqlite3
+*.db
+server/db/*.sqlite*
+
+# ── 측정 데이터 (용량이 커서 iCloud 에 둔다) ──────────────────────
+# 원본은  iCloud/Work/AOS_GTS/DOC/example_data*  참조
+*.dat
+example_data/
+example_data_single/
+
+# ── 큰 바이너리 참고자료 (iCloud 에 둔다) ─────────────────────────
+OLD_PCSW/
+AOS_TWIN_File_Viewer/
+*.dll
+*.hyb
+
+# ── 백업 (git 이 히스토리를 대신한다) ─────────────────────────────
+backup_*/
+*.bak
+*.bak_*
+
+# ── macOS ─────────────────────────────────────────────────────────
+.DS_Store
+._*
+*.icloud
+.Spotlight-V100
+.Trashes

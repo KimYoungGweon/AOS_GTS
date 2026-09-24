@@ -1,0 +1,17 @@
+console_sim -> 127.0.0.1:5502  target=GFC #1  my_id=1
+ 명령을 치면 콘솔이 보내는 것과 똑같은 프레임을 5502 로 던진다.
+
+  c        CONNECT            (P1 장치 선택 = ENTER CONTROL 활성 조건)
+  p        PING
+  m0 / m1  SET_MODE MANUAL / AUTO
+  on / off SET_PUMP 1 / 0     (P2 MANUAL 의 Pump 버튼)
+  t 300 15 SET_TIMES start_ds cycle_ds   (30.0s / 1.5s)
+  run/stop AUTO_RUN 1 / 0     (P2 AUTO 의 START/STOP)
+  d        DISCONNECT
+  q        종료
+
+>   TX 0x01 seq=1  02 02 01 01 04 00 03 01 01 00 93 0c
+>   TX 0x23 seq=2  02 02 01 23 05 00 03 01 02 00 00 2f 6c
+>   TX 0x21 seq=3  02 02 01 21 05 00 03 01 03 00 01 3e b5
+>   TX 0x21 seq=4  02 02 01 21 05 00 03 01 04 00 00 4e b4
+> 

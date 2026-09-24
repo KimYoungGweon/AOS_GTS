@@ -1,0 +1,93 @@
+#
+# GTS_CONSOLE_ESP32P4 — 프로젝트 기본 설정
+#
+# 출발점인 JC4880P443C_Demo 에서 menuconfig 로 맞춰 둔 값을 옮겨 적은 것이다.
+# 데모는 이 값들이 sdkconfig 에만 있고 sdkconfig.defaults 에는 빠져 있어서,
+# `idf.py set-target` 을 돌리거나 sdkconfig 를 지우면 조용히 기본값으로
+# 되돌아간다. 그래서 여기에 명시한다.
+#
+# 환경: ESP-IDF v6.1 (데모와 동일)
+#
+
+CONFIG_IDF_TARGET="esp32p4"
+
+# ── 칩 리비전 ────────────────────────────────────────────────────────
+# 이 보드의 ESP32-P4 는 v1.3 이다 (데모 부팅 로그: chip revision: v1.3).
+#
+# ★ 아래 두 줄은 순서와 짝이 중요하다.
+#   ESP32P4_SELECTS_REV_LESS_V3 는 menuconfig 의
+#   "Select ESP32-P4 revisions <3.0 (No >=3.x Support)" 항목이고 기본값은 n 이다.
+#   이게 n 이면 최소 리비전 선택지가 Rev v3.0 / v3.1 만 나오고 기본 v3.1 이 잡힌다.
+#   v0.0 / v0.1 / v1.0 선택지는 이 옵션이 y 일 때만 나타난다
+#   (Kconfig: depends on ESP32P4_SELECTS_REV_LESS_V3).
+#
+#   따라서 이 줄이 없으면 ESP32P4_REV_MIN_1 은 보이지 않는 심볼이라 무시되고,
+#   이미지 최소 리비전이 v3.1 로 박혀 v1.3 칩에서 부팅이 거부된다.
+#   빌드는 멀쩡히 통과하므로 알아채기 어렵다.
+#
+#   이 한 줄이 BOOTLOADER_CPU_CLK_FREQ_MHZ(90), REV_MAX_FULL(199),
+#   PM_* 절전 옵션까지 함께 결정한다.
+CONFIG_ESP32P4_SELECTS_REV_LESS_V3=y
+CONFIG_ESP32P4_REV_MIN_1=y
+
+# ── CPU ──────────────────────────────────────────────────────────────
+# 기본 400 MHz 에서 360 MHz 로 낮춘다. 데모에서 이 값으로 동작 확인됨.
+CONFIG_ESP_DEFAULT_CPU_FREQ_MHZ_360=y
+
+# ── PSRAM ────────────────────────────────────────────────────────────
+CONFIG_SPIRAM=y
+CONFIG_SPIRAM_MODE_HEX=y
+CONFIG_SPIRAM_SPEED_200M=y
+
+# ── Flash ────────────────────────────────────────────────────────────
+CONFIG_ESPTOOLPY_FLASHMODE_QIO=y
+CONFIG_ESPTOOLPY_FLASHFREQ_80M=y
+CONFIG_ESPTOOLPY_FLASHSIZE_16MB=y
+# 실장 플래시는 BOYA. GD 드라이버를 빼고 BOYA 를 넣어야 인식된다.
+CONFIG_SPI_FLASH_SUPPORT_GD_CHIP=n
+CONFIG_SPI_FLASH_SUPPORT_BOYA_CHIP=y
+
+# ── 파티션 ───────────────────────────────────────────────────────────
+# 테이블을 기본 0x8000 이 아니라 0x9000 에 둔다 (부트로더 공간 28 KB).
+# 0x8000 이면 IDF 6.1 부트로더가 한도 0x6000 을 넘어 빌드가 멈춘다.
+# partitions.csv 의 주소들이 이 값에 맞춰져 있다.
+CONFIG_PARTITION_TABLE_CUSTOM=y
+CONFIG_PARTITION_TABLE_OFFSET=0x9000
+
+# ── 시스템 ───────────────────────────────────────────────────────────
+CONFIG_FREERTOS_HZ=1000
+CONFIG_IDF_EXPERIMENTAL_FEATURES=y
+
+# ── Wi-Fi 코프로세서 (esp_hosted, SDIO) ──────────────────────────────
+# 슬레이브 F/W 빌드는 firmware-build-esp32-c6-coprocessor.md 참고.
+CONFIG_ESP_HOSTED_SDIO_TX_Q_SIZE=6
+CONFIG_ESP_HOSTED_SDIO_RX_Q_SIZE=6
+
+# ── LVGL ─────────────────────────────────────────────────────────────
+CONFIG_LV_COLOR_DEPTH_24=y
+CONFIG_LV_USE_LOG=y
+
+# LVGL 할당기 — 기본값인 내장 고정 풀(LV_MEM_SIZE 64 KB)은 이 UI 에 부족하다.
+# 화면 4종 합쳐 위젯이 250개쯤 되는데, 위젯 생성까지는 통과하고 첫 렌더에서
+# lv_draw_add_task() 의 할당이 NULL 을 받아 Store access fault 로 죽는다.
+# C 표준 malloc 으로 돌리면 ESP-IDF 힙(내부 RAM + PSRAM 32 MB)을 쓴다.
+# LVGL 렌더 버퍼는 main.c 에서 따로 MALLOC_CAP_DMA 로 잡으므로 영향 없다.
+CONFIG_LV_USE_CLIB_MALLOC=y
+# gts_theme.h 의 GF_* 매크로가 쓰는 크기. 하나라도 빠지면 링크 에러.
+# 데모(14/16/20/28/48)에 18/22/24/34/38/40 을 추가했다.
+CONFIG_LV_FONT_MONTSERRAT_14=y
+CONFIG_LV_FONT_MONTSERRAT_16=y
+CONFIG_LV_FONT_MONTSERRAT_18=y
+CONFIG_LV_FONT_MONTSERRAT_20=y
+CONFIG_LV_FONT_MONTSERRAT_22=y
+CONFIG_LV_FONT_MONTSERRAT_24=y
+CONFIG_LV_FONT_MONTSERRAT_26=y
+CONFIG_LV_FONT_MONTSERRAT_28=y
+CONFIG_LV_FONT_MONTSERRAT_34=y
+CONFIG_LV_FONT_MONTSERRAT_38=y
+CONFIG_LV_FONT_MONTSERRAT_40=y
+CONFIG_LV_FONT_MONTSERRAT_48=y
+
+# Wi-Fi SSID / PASSWORD 는 sdkconfig 가 아니라 소스에 있다.
+# main/gts_config.h 의 GTS_WIFI_SSID / GTS_WIFI_PASSWORD 를 고칠 것.
+# (menuconfig 의 Wi-Fi 메뉴는 없앴다 — 설정이 두 군데 있으면 헷갈린다.)

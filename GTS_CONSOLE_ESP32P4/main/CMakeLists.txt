@@ -1,0 +1,34 @@
+idf_component_register(
+    SRCS
+        "main.c"
+        "gts_state.c"
+        "gts_protocol.c"
+        "gts_input.c"
+        "gts_rotate.c"
+        "gts_sim.c"
+        "gts_theme.c"
+        "gts_ui.c"
+        "gts_ui_p1.c"
+        "gts_ui_p2.c"
+        "gts_ui_p3.c"
+        "gts_ui_p4.c"
+        "gts_ui_p5.c"
+        "wifi_manager.c"
+
+    INCLUDE_DIRS "."
+    REQUIRES
+        jc4880p443c
+        lvgl
+        esp_lcd_st7701
+        esp_lcd_touch
+        esp_lcd_touch_gt911
+        esp_timer
+        driver
+    PRIV_REQUIRES
+        esp_wifi
+        esp_netif
+        esp_event
+        nvs_flash
+        lwip
+        esp_driver_ledc
+)
