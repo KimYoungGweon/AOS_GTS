@@ -518,6 +518,12 @@ AOS_GTS 작업 명령
  시뮬레이터 (서버에서 실행, 장비 없이 검증)
    gts-sim-aos [ID]   gts-sim-gfc [ID]   gts-sim-con [ID]
 
+ Git — 기기 간 동기화 (회사 iMac ↔ 집 MacBook)
+   gts-sync             작업 시작: GitHub 에서 받기
+   gts-save ["메시지"]  작업 끝: add + commit + push (메시지 없으면 기기·시각)
+   gts-st               안 올린 변경 / 안 받은 커밋 확인
+   ※ gts-push·gts-pull 은 서버용, gts-save·gts-sync 는 GitHub 용
+
  이동만
    gts   루트        gts-srv   server/        gts-doc   DOC/
 
@@ -533,10 +539,14 @@ AOS_GTS 작업 명령
    그 파일은 iCloud 밖이라 맥마다 따로 있고, 기본값을 덮어쓴다.
 
  하루 시작할 때
+   gts-sync                          ← 먼저 GitHub 에서 받기
    gts-doctor                        ← 자리를 옮겼으면
    idf                               ← 터미널마다 한 번
    gts-aos fm                        ← 펌웨어
    gts-push ; gts-log                ← 서버
+
+ 하루 끝낼 때
+   gts-save "오늘 한 일"              ← 자리 뜨기 전에 꼭
 HELP
 }
 
@@ -698,6 +708,95 @@ gts-doctor() {
         bad=1
     fi
     return $bad
+}
+
+# ══════════════════════════════════════════════════════════════════════
+#  Git — 기기 간 동기화 (회사 iMac ↔ 집 MacBook)
+#
+#   gts-sync            작업 시작: GitHub 에서 받기 (pull)
+#   gts-save ["메시지"]  작업 끝:   add + commit + push
+#   gts-st              지금 상태 (안 올린 변경 / 안 받은 커밋)
+#
+#  서버용 gts-push / gts-pull 과 이름이 다르니 헷갈리지 말 것.
+#  (gts-push = 서버에 배포, gts-save = GitHub 에 저장)
+# ══════════════════════════════════════════════════════════════════════
+
+_gts_git() { git -C "$GTS_ROOT" "$@" }
+
+_gts_need_git() {
+    if ! _gts_git rev-parse --is-inside-work-tree >/dev/null 2>&1; then
+        _gts_err "git 저장소가 아니다: $GTS_ROOT"
+        return 1
+    fi
+}
+
+gts-st() {
+    _gts_need_git || return 1
+    _gts_git fetch -q origin 2>/dev/null || _gts_warn "GitHub 에 못 닿음 — 로컬 상태만 표시"
+    _gts_git status -sb
+}
+
+gts-sync() {
+    _gts_need_git || return 1
+    local before=$(_gts_git rev-parse HEAD)
+
+    if [[ -n "$(_gts_git status --porcelain)" ]]; then
+        _gts_warn "커밋 안 된 변경이 있다 (받기는 계속 진행)"
+        _gts_git status --short | head -20
+    fi
+
+    _gts_step "GitHub 에서 받는 중…"
+    if ! _gts_git pull --ff-only; then
+        _gts_err "자동으로 합칠 수 없다"
+        print "  다른 기기에서 올린 것과 여기서 커밋한 것이 갈라진 상태일 가능성이 크다."
+        print "    gts-st                               ← 상태 확인"
+        print "    git -C \"\$GTS_ROOT\" pull --rebase    ← 내 커밋을 위로 올려 합치기"
+        print "  같은 줄을 양쪽에서 고쳤으면 충돌 표시가 나온다 — 그때는 물어볼 것."
+        return 1
+    fi
+
+    local after=$(_gts_git rev-parse HEAD)
+    if [[ "$before" == "$after" ]]; then
+        _gts_ok "이미 최신"
+    else
+        _gts_ok "받은 커밋:"
+        _gts_git log --oneline "$before..$after"
+    fi
+}
+
+gts-save() {
+    _gts_need_git || return 1
+    local msg="$*"
+    [[ -z "$msg" ]] && msg="작업 저장 — ${HOST%%.*} $(date '+%Y-%m-%d %H:%M')"
+
+    _gts_git add -A
+
+    # 비밀 파일이 실수로 들어가는 것을 막는다 (.gitignore 가 1차 방어)
+    local bad=$(_gts_git diff --cached --name-only | grep -E '(^|/)(wifi_secrets\.h|\.env)$')
+    if [[ -n "$bad" ]]; then
+        _gts_err "비밀 파일이 커밋에 들어가려 한다 — 중단"
+        print "$bad" | sed 's/^/    /'
+        _gts_git reset -q
+        return 1
+    fi
+
+    if [[ -n "$(_gts_git diff --cached --name-only)" ]]; then
+        _gts_step "커밋할 변경:"
+        _gts_git diff --cached --stat | tail -15
+        _gts_git commit -q -m "$msg" || { _gts_err "커밋 실패"; return 1 }
+        _gts_ok "커밋: $msg"
+    else
+        _gts_ok "새로 커밋할 변경 없음"
+    fi
+
+    _gts_step "GitHub 에 올리는 중…"
+    if ! _gts_git push -q; then
+        _gts_err "push 실패"
+        print "  다른 기기에서 먼저 올린 것이 있으면 이렇게 된다."
+        print "    gts-sync  →  gts-save   순서로 다시"
+        return 1
+    fi
+    _gts_ok "GitHub 에 저장됨 — 다른 기기에서 gts-sync 로 받으면 된다"
 }
 
 # 로드 확인용 한 줄 (조용히 하고 싶으면 이 줄을 지울 것)
