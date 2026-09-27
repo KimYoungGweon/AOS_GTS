@@ -21,7 +21,7 @@
 | # | 대상 | 하드웨어 ✔ | 범위 | F/W 테이블 ✔ | X | Y |
 |---|---|---|---|---|---|---|
 | 1 | **HV_DAC** | LTC2602 **ch1**, 16 bit | 0 ~ 200 V ✔ | `CSET` | 실측 전압 (float) | DAC (u16) |
-| 2 | **HV_ADC** | AD7739 **ch0** (`HV_Vs_adc`, u16) | 0 ~ 200 V | `CSENSE_VS` | ADC raw (u16) | 실측 전압 (float) |
+| 2 | **HV_ADC** | AD7739 **ch0** (`HV_Vs_adc`, u16) | 0 ~ 200 V zsh -n ~/Git_Repository/AOS_GTS/tools/gts_env.zsh && exec zsh| `CSENSE_VS` | ADC raw (u16) | 실측 전압 (float) |
 | 3 | **CV_DAC** | LTC2602 **ch0**, 16 bit | −5 ~ +5 V ✔ | `CSET_CV` | 실측 전압 (float) | DAC (u16) |
 
 - CV 는 ADC 없음 ✔
