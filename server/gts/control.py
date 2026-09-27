@@ -197,6 +197,8 @@ def execute(dev_type, did, cmd, payload: bytes, actor: str, owner_id: str,
     try:
         if dev is None or not dev.online:
             raise ControlError("offline", f"{TYPE_NAME[dev_type]} {did:02d} 오프라인", 409)
+        if dev_type == AOS and did in S.CAL_BLOCK:
+            raise ControlError("denied_cal", f"AOS {did:02d} 캘리브레이션 중 — 캘리브레이션 페이지에서만 조작")
         # run 잠금은 AOS 파라미터에만. GFC(가스 공급)는 측정 중에도 조작이 필요하다
         _check_run(did, allow_during_run or dev_type == GFC)
         acquire_web(dev_type, did, owner_id, actor)

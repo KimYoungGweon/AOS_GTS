@@ -73,3 +73,22 @@ HOUSEKEEP_SEC = _f("GTS_HOUSEKEEP_SEC", 600.0)
 
 # ── 제어권 (D14) ────────────────────────────────────────────────────
 LOCK_LEASE_SEC = _f("GTS_LOCK_LEASE_SEC", 30.0)
+
+# ── 캘리브레이션 (DOC/GTS_HV캘리브레이션_계획.md) ─────────────────────
+DMM_HOST = os.environ.get("GTS_DMM_HOST", "192.168.0.7")      # Keysight 34461A
+DMM_PORT = _i("GTS_DMM_PORT", 5025)                             # SCPI raw socket
+DMM_TIMEOUT = _f("GTS_DMM_TIMEOUT", 5.0)
+DMM_RANGE_HV = _f("GTS_DMM_RANGE_HV", 1000.0)   # HV 측정 레인지 고정 1000 V (2026-09-27 결정)
+DMM_RANGE_CV = _f("GTS_DMM_RANGE_CV", 10.0)     # CV 측정 레인지 고정 10 V
+DMM_NPLC = _f("GTS_DMM_NPLC", 10.0)
+CAL_HV_MAX = 200.0
+CAL_CV_MIN, CAL_CV_MAX = -5.0, 5.0
+CAL_NO_MAX = _i("GTS_CAL_NO_MAX", 101)          # F/W CAL_NO (현재 40 → 101 로 수정 예정)
+CAL_RAMP_STEP_V = _f("GTS_CAL_RAMP_STEP_V", 10.0)   # HV 를 한 번에 바꿀 수 있는 최대 폭
+CAL_RAMP_DELAY = _f("GTS_CAL_RAMP_DELAY", 0.3)      # 램프 한 칸마다 대기 [s]
+CAL_BRIDGE_TIMEOUT = _f("GTS_CAL_BRIDGE_TIMEOUT", 1.5)
+CAL_DEV_LIMIT_HV = _f("GTS_CAL_DEV_LIMIT_HV", 5.0)  # |실측 − 설정| 이 넘으면 자동 중단
+CAL_DEV_LIMIT_CV = _f("GTS_CAL_DEV_LIMIT_CV", 0.5)
+CAL_DISCHARGE_V = _f("GTS_CAL_DISCHARGE_V", 1.0)    # 0 V 복귀 후 HV_Vs 가 이 아래면 방전 완료
+CAL_DISCHARGE_TIMEOUT = _f("GTS_CAL_DISCHARGE_TIMEOUT", 20.0)
+CAL_DIR = os.environ.get("GTS_CAL_DIR", str(Path(__file__).resolve().parent.parent / "data" / "cal"))

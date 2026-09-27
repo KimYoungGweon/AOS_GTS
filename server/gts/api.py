@@ -7,6 +7,7 @@
   2-B. 장비 상세 Auto  POST /api/runs · /api/runs/{id}/pause|resume|finish|abort
   3. Heatmap Viewer   GET /api/runs/{id}/overview · /api/runs/{id}/heatmaps · /export.csv
   4. 데이터 목록       GET /api/runs · /api/air-list · /api/gases · /api/db/stats
+  5. 캘리브레이션      /api/cal/*  (gts/cal_api.py)
 
 전체 목록과 예시: http://<서버>:8081/docs  (Swagger UI, 토큰은 Authorize 버튼)
 """
@@ -52,6 +53,9 @@ async def _run_err(_req, e: RunError):
 
 
 READ, CONTROL, ADMIN = need("read"), need("control"), need("admin")
+
+from . import cal_api                     # noqa: E402  5. 캘리브레이션 (/api/cal/*)
+cal_api.install(app)
 
 # ── 캐시 (2초 주기 갱신) ─────────────────────────────────────────────
 GAS_NAME: dict[int, str | None] = {}

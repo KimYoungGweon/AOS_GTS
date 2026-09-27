@@ -80,4 +80,6 @@ def install():
     hooks.register("console_control", control.on_console_control)
     hooks.register("tx_fail", on_tx_fail)
     hooks.register("dev_event", on_dev_event)
+    from . import cal
+    cal.install_hooks()
     live.on_event = store.event

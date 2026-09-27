@@ -124,6 +124,9 @@ async def start_run(device_id, kind, mode, *, target_gas=None, label=None, comme
         g = DEFAULT_GRID[mode]
     else:
         raise RunError("mode 는 fast | hour1 | full8")
+    import udp_server as _S
+    if device_id in _S.CAL_BLOCK:
+        raise RunError(f"AOS {device_id:02d} 캘리브레이션 중 — run 을 시작할 수 없습니다", 409)
     pool = _pool()
     async with pool.acquire() as c:
         async with c.transaction():

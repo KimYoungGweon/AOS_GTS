@@ -329,12 +329,31 @@ A_PARAMS_QUERY = 0x43   # S→A  0
 A_PARAMS = 0x44         # A→S 26  (콘솔 0xC3 과 같은 배치)
 A_STATUS = 0x45         # A→S 24
 A_SYS = 0x4F
+# ── 캘리브레이션 (DOC/GTS_HV캘리브레이션_계획.md 5.1, 2026-09-27) ──────────
+#   응답(0x49/0x4B/0x4E)은 요청의 seq 를 그대로 반사한다.
+A_CAL_MODE = 0x46       # S→A  4  u8 on, pad[3]                  → ACK
+A_CAL_WRITE = 0x47      # S→A  N  STM32 0xA0 payload 그대로       → ACK (UART 송신 후)
+A_CAL_QUERY = 0x48      # S→A  4  u8 type, pad[3]                → 0x49
+A_CAL_TABLE = 0x49      # A→S  N  STM32 0xA1 응답 payload 그대로  (u8 type, u8 no, no×6)
+A_CAL_SENSE_Q = 0x4A    # S→A  4  u16 window_ms, u16 rsv          → 0x4B
+A_CAL_SENSE = 0x4B      # A→S 20  f32 avg, f32 min, f32 max, u16 n, u16 rsv, u32 age_ms
+A_CAL_DAC_RAW = 0x4C    # S→A  4  u8 ch(0=CV,1=HV), u8 rsv, u16 dac → ACK   (F/W 신규 명령 필요, 선택)
+A_CAL_ADC_RAW_Q = 0x4D  # S→A  4  u8 ch, u8 avg_n, u16 rsv          → 0x4E (F/W 신규 명령 필요, 선택)
+A_CAL_ADC_RAW = 0x4E    # A→S  8  u8 ch, u8 n, u16 rsv, f32 raw_avg
+AOS_CAL_SENSE_FMT = "<3fHHI"
+assert struct.calcsize(AOS_CAL_SENSE_FMT) == 20
+AOS_CAL_RESP = (A_CAL_TABLE, A_CAL_SENSE, A_CAL_ADC_RAW)
+# 캘리브레이션 중인 AOS — 콘솔/웹의 파라미터 변경을 막는다 (gts/cal.py 가 관리)
+CAL_BLOCK: set = set()
 
 AOS_CMD_NAME = {
     A_HELLO: "HELLO", A_ACK: "ACK", A_EVENT: "EVENT", A_PING: "PING",
     A_DISCOVER: "DISCOVER", A_PARAM_SET: "PARAM_SET", A_LF_MODE: "LF_MODE",
     A_LF_SHAPE: "LF_SHAPE", A_PARAMS_QUERY: "PARAMS_QUERY",
     A_PARAMS: "PARAMS", A_STATUS: "STATUS", A_SYS: "SYS",
+    A_CAL_MODE: "CAL_MODE", A_CAL_WRITE: "CAL_WRITE", A_CAL_QUERY: "CAL_QUERY",
+    A_CAL_TABLE: "CAL_TABLE", A_CAL_SENSE_Q: "CAL_SENSE_Q", A_CAL_SENSE: "CAL_SENSE",
+    A_CAL_DAC_RAW: "CAL_DAC_RAW", A_CAL_ADC_RAW_Q: "CAL_ADC_RAW_Q", A_CAL_ADC_RAW: "CAL_ADC_RAW",
 }
 
 AOS_EVENT_NAME = {0x01: "BOOT", 0x20: "PARAM_APPLY", 0x21: "POINT",
@@ -915,6 +934,11 @@ class ConsoleProtocol(asyncio.DatagramProtocol):
         번호를 맞춰 둔 덕에 변환이랄 게 거의 없다."""
         a = self.h["aos"]
 
+        if dev.did in CAL_BLOCK and cmd in (C_AOS_SET_PARAM, C_AOS_SET_LF_MODE, C_AOS_SET_LF_SHAPE):
+            log("MAP", f"AOS {dev.did} 캘리브레이션 중 — {CONSOLE_CMD_NAME.get(cmd, hex(cmd))} 거부")
+            self.nak(sess, DEV_AOS, dev.did, seq, cmd, ERR_BUSY)
+            return
+
         if cmd == C_AOS_SET_PARAM:
             # u8 param_id, u8 pad[3], f32 value — 8 byte 그대로 통과
             if len(pl) < 8:
@@ -994,14 +1018,15 @@ class AosProtocol(asyncio.DatagramProtocol):
         if dev.addr is None:
             log("AOS", f"DID={dev.did} 주소 미확인 — cmd 0x{cmd:02X} 버림")
             return False
-        seq = dev.next_seq()
+        seq = dev.next_seq() or dev.next_seq()      # 0 은 건너뛴다 (반환값을 bool 로 쓰는 호출부)
         pkt = gfc_build(DTYPE_AOS, dev.did, cmd, seq, payload)
         self.transport.sendto(pkt, dev.addr)
+        self.last_seq = seq
         if cmd in (A_PARAM_SET, A_LF_MODE, A_LF_SHAPE):
             _pending_add("aos", self, dev, cmd, seq, pkt)
         log("AOS", f"TX-> DID={dev.did} {AOS_CMD_NAME.get(cmd, hex(cmd))} "
-                   f"seq={seq} {pkt.hex(' ')}")
-        return True
+                   f"seq={seq} {pkt.hex(' ') if len(pkt) <= 48 else f'{len(pkt)}B'}")
+        return seq
 
     def ack(self, dev, ack_cmd, ack_seq):
         payload = struct.pack("<BBH", ack_cmd, 0, ack_seq)
@@ -1093,10 +1118,14 @@ class AosProtocol(asyncio.DatagramProtocol):
             if len(f["payload"]) >= 4:
                 ack_cmd, result, ack_seq = struct.unpack("<BBH", f["payload"][:4])
                 _pending_ack("aos", dev.did, ack_seq, ack_cmd, result)
+                _emit("aos_ack", dev, ack_cmd, result, ack_seq)
                 if result:
                     log("AOS", f"ACK  DID={dev.did} for "
                                f"{AOS_CMD_NAME.get(ack_cmd, hex(ack_cmd))} "
                                f"result={result} seq={ack_seq}")
+
+        elif cmd in AOS_CAL_RESP:          # 캘리브레이션 응답 — ACK 없이 gts/cal.py 로
+            _emit("aos_cal", dev, cmd, f["seq"], bytes(f["payload"]))
 
         else:
             log("AOS", f"DID={dev.did} {name} seq={f['seq']} size={len(f['payload'])}")
